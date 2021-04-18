@@ -1,14 +1,14 @@
-import React, { useContext, createContext, useReducer } from "react";
+import React, { useContext, createContext, useReducer } from 'react';
 
-import { parseLineSpec } from "./utils";
+import { parseLineSpec } from './utils';
 
 const DEFAULT_OPTIONS = {
   showLineNumber: false,
-  showTimestamp: "short",
-  textFormat: "json",
-  jsonOptions: { message: "message", timestamp: "@timestamp" },
+  showTimestamp: 'short',
+  textFormat: 'json',
+  jsonOptions: { message: 'message', timestamp: '@timestamp' },
   textOptions: { timestampPattern: null, extractKeyValue: true },
-  encoding: "utf8",
+  encoding: 'utf8',
   bufferSize: 1000,
 };
 
@@ -20,7 +20,7 @@ const initialState = {
     lineCount: 0,
   },
   filter: {
-    query: "",
+    query: '',
   },
   activeLine: null,
   filterView: {
@@ -36,9 +36,9 @@ const FileContext = createContext(initialState);
 const { Provider } = FileContext;
 
 const reducer = (state, action) => {
-  console.log("dispatch", action);
+  console.log('dispatch', action);
   switch (action.type) {
-    case "file-opened":
+    case 'file-opened':
       return {
         ...initialState,
         file: {
@@ -46,58 +46,66 @@ const reducer = (state, action) => {
           lineCount: action.lineCount,
         },
       };
-    case "goto":
-      const lineNo = parseLineSpec(action.lineSpec, state.file.lineCount, state.file.currentLine);
+    case 'goto':
+      const lineNo = parseLineSpec(
+        action.lineSpec,
+        state.file.lineCount,
+        state.file.currentLine
+      );
       if (action.activate) {
         return {
           ...state,
           activeLine: action.activate,
           file: { ...state.file, currentLine: lineNo },
         };
-      } else {
-        return {
-          ...state,
-          file: { ...state.file, currentLine: lineNo },
-        };
       }
-    case "activate-line":
+      return {
+        ...state,
+        file: { ...state.file, currentLine: lineNo },
+      };
+
+    case 'activate-line':
       return {
         ...state,
         activeLine: action.lineNo,
       };
-    case "file-loaded":
+    case 'file-loaded':
       return {
         ...initialState,
         file: { path: action.path, fileSize: action.fileSize, currentLine: 0 },
       };
-    case "update-options":
+    case 'update-options':
       return {
         ...state,
         options: { ...state.options, ...action.updates },
       };
-    case "set-filter":
+    case 'set-filter':
       return {
         ...state,
         filter: action.filter,
         filterResultCount: 0,
       };
-    case "search-scan":
+    case 'search-scan':
       return {
         ...state,
         filterResultCount: action.filterResultCount,
       };
-    case "update-filter-view": {
+    case 'update-filter-view': {
       return {
         ...state,
         filterView: action.filterView,
       };
     }
-    case "select-line":
+    case 'select-line':
       let newSelectedLines;
       if (action.selected) {
-        newSelectedLines = state.selectedLines.concat([action.line]).sort((a, b) => a.lineNo - b.lineNo);
+        newSelectedLines = state.selectedLines
+          .concat([action.line])
+          .sort((a, b) => a.lineNo - b.lineNo);
       } else {
-        newSelectedLines = state.selectedLines.filter((l) => l.lineNo !== action.line.lineNo);
+        newSelectedLines = state.selectedLines.filter(
+          (l) => l.lineNo !== action.line.lineNo
+        );
       }
       return {
         ...state,

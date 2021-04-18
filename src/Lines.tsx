@@ -1,10 +1,9 @@
-import React from "react";
-import CustomScrollbar from "./CustomScrollbar";
-import LineSelector from "./LineSelector";
+import React from 'react';
+import throttle from 'lodash.throttle';
+import CustomScrollbar from './CustomScrollbar';
+import LineSelector from './LineSelector';
 
-import throttle from "lodash.throttle";
-
-import { FileContext } from "./FileStateProvider";
+import { FileContext } from './FileStateProvider';
 
 const HANDLE_SIZE = 20; // TODO this needs to be dynamic
 const EMPTY_BUFFER = { lines: null, offset: 0 };
@@ -23,34 +22,45 @@ const LineBuffer = React.memo(
     lineCount,
   }) => {
     const formatTimestamp = (value) => {
-      if (showTimestamp === "short" && value) {
+      if (showTimestamp === 'short' && value) {
         const d = new Date(value).toISOString();
         return d.substring(11, 23);
-      } else {
-        return value;
       }
+      return value;
     };
 
     const isLineSelected = (l) => {
-      return selectedLines.find((o) => o.lineNo === l.lineNo) ? true : false;
+      return !!selectedLines.find((o) => o.lineNo === l.lineNo);
     };
 
     const toggleLine = (line, selected) => {
-      dispatch({ type: "select-line", line, selected });
+      dispatch({ type: 'select-line', line, selected });
     };
 
-    console.log("LINEBUFFER RENDER ");
+    console.log('LINEBUFFER RENDER ');
     const colspan = showLineNumber ? 4 : 3;
     const lastLine = lines ? lines[lines.length - 1] : null;
-    const lastLineNo = lastLine ? (lastLine["searchLine"] ? lastLine["searchLine"] : lastLine["lineNo"]) : null;
-    console.log("last line", lastLine, lastLineNo, lineCount);
+    const lastLineNo = lastLine
+      ? lastLine.searchLine
+        ? lastLine.searchLine
+        : lastLine.lineNo
+      : null;
+    console.log('last line', lastLine, lastLineNo, lineCount);
     return (
-      <div style={{ height: height + "px", overflowY: "hidden" }}>
-        <table ref={tableRef} width="100%" style={{ borderCollapse: "separate", borderSpacing: "0 1px" }}>
+      <div style={{ height: `${height}px`, overflowY: 'hidden' }}>
+        <table
+          ref={tableRef}
+          width="100%"
+          style={{ borderCollapse: 'separate', borderSpacing: '0 1px' }}
+        >
           <tbody>
             {lines &&
               lines.map((l, idx) => (
-                <tr key={idx} onClick={() => onLineClick(l)} className={activeLine === l.lineNo ? "selected" : ""}>
+                <tr
+                  key={idx}
+                  onClick={() => onLineClick(l)}
+                  className={activeLine === l.lineNo ? 'selected' : ''}
+                >
                   <td className="rowheading">
                     <LineSelector
                       size={19}
@@ -59,13 +69,21 @@ const LineBuffer = React.memo(
                     />
                   </td>
                   {showLineNumber && <td className="rowheading">{l.lineNo}</td>}
-                  {showTimestamp !== "none" && <td className="rowheading">{formatTimestamp(l["_ts"])}</td>}
-                  <td style={{ whiteSpace: "pre", width: "100%" }}>{l["_message"]}</td>
+                  {showTimestamp !== 'none' && (
+                    <td className="rowheading">{formatTimestamp(l._ts)}</td>
+                  )}
+                  <td style={{ whiteSpace: 'pre', width: '100%' }}>
+                    {l._message}
+                  </td>
                 </tr>
               ))}
             {lines && lastLineNo === lineCount - 1 && (
               <tr>
-                <td className="rowheading" style={{ textAlign: "center" }} colSpan={colspan}>
+                <td
+                  className="rowheading"
+                  style={{ textAlign: 'center' }}
+                  colSpan={colspan}
+                >
                   End of file
                 </td>
               </tr>
@@ -97,14 +115,14 @@ class Lines extends React.Component {
   constructor(props) {
     super(props);
 
-    console.log("CONST", this.props.id, props);
-    console.log("===========");
-    console.log("===========");
-    console.log("===========");
-    console.log("===========");
-    console.log("===========");
-    console.log("===========");
-    console.log("===========");
+    console.log('CONST', this.props.id, props);
+    console.log('===========');
+    console.log('===========');
+    console.log('===========');
+    console.log('===========');
+    console.log('===========');
+    console.log('===========');
+    console.log('===========');
     this.tableRef = React.createRef();
 
     this.state = {
@@ -137,18 +155,18 @@ class Lines extends React.Component {
       return;
     }
     const pageSize = 20;
-    if (e.key === "ArrowUp" && e.ctrlKey) {
-      this.gotoLine("0");
-    } else if (e.key === "ArrowDown" && e.ctrlKey) {
+    if (e.key === 'ArrowUp' && e.ctrlKey) {
+      this.gotoLine('0');
+    } else if (e.key === 'ArrowDown' && e.ctrlKey) {
       this.gotoLine(Number.MAX_SAFE_INTEGER.toString());
-    } else if (e.key === "ArrowUp") {
-      this.gotoLine("-1");
-    } else if (e.key === "ArrowDown") {
-      this.gotoLine("+1");
-    } else if (e.key === "PageDown") {
-      this.gotoLine("+" + pageSize);
-    } else if (e.key === "PageUp") {
-      this.gotoLine("-" + pageSize);
+    } else if (e.key === 'ArrowUp') {
+      this.gotoLine('-1');
+    } else if (e.key === 'ArrowDown') {
+      this.gotoLine('+1');
+    } else if (e.key === 'PageDown') {
+      this.gotoLine(`+${pageSize}`);
+    } else if (e.key === 'PageUp') {
+      this.gotoLine(`-${pageSize}`);
     }
   };
 
@@ -167,9 +185,9 @@ class Lines extends React.Component {
       if (deltaLines >= -0.5 && deltaLines <= 0.5) return;
       let deltaLinesSpec;
       if (deltaLines > 0) {
-        deltaLinesSpec = "+" + deltaLines;
+        deltaLinesSpec = `+${deltaLines}`;
       } else {
-        deltaLinesSpec = "" + deltaLines;
+        deltaLinesSpec = `${deltaLines}`;
       }
       window.focused = this.props.id;
       this.gotoLine(deltaLinesSpec);
@@ -177,16 +195,16 @@ class Lines extends React.Component {
   };
 
   componentDidMount() {
-    console.log("DID MOUNT", this.props.id);
-    document.addEventListener("keydown", this.handleKeys);
-    document.addEventListener("wheel", this.handleWheel);
+    console.log('DID MOUNT', this.props.id);
+    document.addEventListener('keydown', this.handleKeys);
+    document.addEventListener('wheel', this.handleWheel);
 
     this.ensureBuffersLoaded();
   }
 
   componentWillUnmount() {
-    document.removeEventListener("keydown", this.handleKeys);
-    document.removeEventListener("wheel", this.handleWheel);
+    document.removeEventListener('keydown', this.handleKeys);
+    document.removeEventListener('wheel', this.handleWheel);
   }
 
   shouldComponentUpdate(nextProps, nextState) {
@@ -206,21 +224,27 @@ class Lines extends React.Component {
         this.repositionTheScroll();
       }, 0);
     }
-    console.log("should update", this.props.id, updated);
+    console.log('should update', this.props.id, updated);
     return updated;
   }
 
   componentDidUpdate(prevProps, prevState) {
-    console.log("didUpdate", this.props.id);
+    console.log('didUpdate', this.props.id);
     let selectionChangedInSearch = false;
-    if (this.props.id.indexOf("search") === 0) {
+    if (this.props.id.indexOf('search') === 0) {
       // when selected lines change we don't need to refresh
-      const beforeId = prevProps.id.substring(0, prevProps.id.lastIndexOf("-"));
-      const afterId = this.props.id.substring(0, this.props.id.lastIndexOf("-"));
+      const beforeId = prevProps.id.substring(0, prevProps.id.lastIndexOf('-'));
+      const afterId = this.props.id.substring(
+        0,
+        this.props.id.lastIndexOf('-')
+      );
       selectionChangedInSearch = beforeId === afterId;
     }
-    if (prevProps.id !== this.props.id || prevProps.loadLines !== this.props.loadLines) {
-      console.log("Source changed, restart", this.props.id);
+    if (
+      prevProps.id !== this.props.id ||
+      prevProps.loadLines !== this.props.loadLines
+    ) {
+      console.log('Source changed, restart', this.props.id);
       this.setState({ buffer: EMPTY_BUFFER });
       if (!selectionChangedInSearch) {
         this.gotoLine(0);
@@ -241,7 +265,7 @@ class Lines extends React.Component {
     const { lines, offset } = this.state.buffer;
 
     const bufferOffset = this.props.currentLine - offset;
-    const rows = this.tableRef.current.getElementsByTagName("tr");
+    const rows = this.tableRef.current.getElementsByTagName('tr');
     // console.log("rows", rows.length)
     if (!rows || bufferOffset >= rows.length) return;
     // console.log("Offset", bufferOffset, rows[bufferOffset].offsetTop);
@@ -259,15 +283,22 @@ class Lines extends React.Component {
       }
       this.tableRef.current.parentElement.scrollTop = rowOffset;
       // console.log("updated ", this.tableRef.current.parentElement.scrollTop)
-    } while (this.tableRef.current.parentElement.scrollTop === originalScrollTop && bufferOffset > adjustment);
+    } while (
+      this.tableRef.current.parentElement.scrollTop === originalScrollTop &&
+      bufferOffset > adjustment
+    );
     if (adjustment > 1) {
       // this is the bottom of the file
-      console.log("bottom of the file adjustment", adjustment - 1);
+      console.log('bottom of the file adjustment', adjustment - 1);
       // debugger;
-      this.gotoLine("-" + (adjustment - 1));
-      const lastBlock = this.props.currentLine + lines.length >= this.props.lineCount;
+      this.gotoLine(`-${adjustment - 1}`);
+      const lastBlock =
+        this.props.currentLine + lines.length >= this.props.lineCount;
       if (!lastBlock) {
-        console.log("bottom of the buffer, need to move", this.props.currentLine);
+        console.log(
+          'bottom of the buffer, need to move',
+          this.props.currentLine
+        );
         this.throttledLoadBuffer(this.props.currentLine, 0.1);
       }
     }
@@ -275,7 +306,7 @@ class Lines extends React.Component {
 
   ensureBuffersLoaded = (currentLine) => {
     if (currentLine < 0) {
-      throw new Error("Negative line number");
+      throw new Error('Negative line number');
     }
     const { lines, offset } = this.state.buffer;
     const scanComplated = this.props.lineCount > 0;
@@ -294,7 +325,12 @@ class Lines extends React.Component {
 
     // only loading the buffer when the scan is complete
     if (scanComplated && (bufferNotLoaded || !isInBuffer(currentLine))) {
-      console.log("currentLine is not in buffer", currentLine, offset, lines ? lines.length : 0);
+      console.log(
+        'currentLine is not in buffer',
+        currentLine,
+        offset,
+        lines ? lines.length : 0
+      );
       // if (currentLine >= offset + lines.length) {
       //   scrollToBottomOfBuffer();
       // } else {
@@ -305,19 +341,24 @@ class Lines extends React.Component {
   };
 
   throttledLoadBuffer = throttle(async (lineNo, overlap) => {
-    const bufferSize = this.context.state.options.bufferSize;
+    const { bufferSize } = this.context.state.options;
     const start = Math.max(0, lineNo - bufferSize * overlap);
-    console.log("Loading buffer from " + start);
+    console.log(`Loading buffer from ${start}`);
     const results = await this.props.loadLines(start, bufferSize);
-    console.log("Loading buffer from " + start + " done");
+    console.log(`Loading buffer from ${start} done`);
     this.setState({ buffer: results });
     this.gotoLine(lineNo);
   }, 500);
 
   render() {
-    console.log("Lines Render ", this.props.id, "line=", this.props.currentLine);
+    console.log(
+      'Lines Render ',
+      this.props.id,
+      'line=',
+      this.props.currentLine
+    );
     const { lines } = this.state.buffer;
-    const options = this.context.state.options;
+    const { options } = this.context.state;
     const { showLineNumber, showTimestamp } = options;
 
     return (

@@ -11,7 +11,14 @@
 import 'core-js/stable';
 import 'regenerator-runtime/runtime';
 import path from 'path';
-import { app, BrowserWindow, shell, globalShortcut, ipcMain, dialog } from 'electron';
+import {
+  app,
+  BrowserWindow,
+  shell,
+  globalShortcut,
+  ipcMain,
+  dialog,
+} from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 
@@ -57,13 +64,13 @@ const installExtensions = async () => {
 };
 
 const registerShortcuts = (win) => {
-    globalShortcut.register('CommandOrControl+O', () => {
-        win.webContents.send('shortcut', "file-open");
-    });
-    globalShortcut.register('CommandOrControl+G', () => {
-        win.webContents.send('shortcut', "go-to-line");
-    });
-}
+  globalShortcut.register('CommandOrControl+O', () => {
+    win.webContents.send('shortcut', 'file-open');
+  });
+  globalShortcut.register('CommandOrControl+G', () => {
+    win.webContents.send('shortcut', 'go-to-line');
+  });
+};
 
 const createWindow = async () => {
   if (
@@ -83,8 +90,8 @@ const createWindow = async () => {
 
   mainWindow = new BrowserWindow({
     show: false,
-    width:1400,
-    height:900,
+    width: 1400,
+    height: 900,
     icon: getAssetPath('icon.png'),
     webPreferences: {
       nodeIntegration: true,
@@ -146,74 +153,108 @@ app.on('activate', () => {
 
 const fileInfo = {};
 
-ipcMain.handle('show-file-open', async (event, arg)=> {
-    const options = {
-        title: 'Open a log file',
-        //defaultPath: '/path/to/something/',
-        buttonLabel: 'Open',
-        /*filters: [
+ipcMain.handle('show-file-open', async (event, arg) => {
+  const options = {
+    title: 'Open a log file',
+    // defaultPath: '/path/to/something/',
+    buttonLabel: 'Open',
+    /* filters: [
           { name: 'xml', extensions: ['xml'] }
-        ],*/
-        //properties: ['showHiddenFiles'],
-        //message: 'This message will only be shown on macOS'
-    };
-    const result = await dialog.showOpenDialog(options);
-    console.log("Dialog closed", new Date())
-    if (result.canceled) {
-        return null;
-    }
-    const path = result.filePaths[0];
-    console.log("Stat", new Date())
-    const stat = await fs.promises.stat(path);
-    console.log("Return", new Date())
-    return { path, fileSize: stat.size, modTime: stat.mtime };
-  })
+        ], */
+    // properties: ['showHiddenFiles'],
+    // message: 'This message will only be shown on macOS'
+  };
+  const result = await dialog.showOpenDialog(options);
+  console.log('Dialog closed', new Date());
+  if (result.canceled) {
+    return null;
+  }
+  const path = result.filePaths[0];
+  console.log('Stat', new Date());
+  const stat = await fs.promises.stat(path);
+  console.log('Return', new Date());
+  return { path, fileSize: stat.size, modTime: stat.mtime };
+});
 
-ipcMain.handle('open-file', async (event, filename, lineBufferSize, options)=> {
+ipcMain.handle(
+  'open-file',
+  async (event, filename, lineBufferSize, options) => {
     const throttledProgress = throttle((p) => {
-        event.sender.send("progress", p);
+      event.sender.send('progress', p);
     }, 200);
-    const results = await openFile(filename, lineBufferSize, options, throttledProgress);
+    const results = await openFile(
+      filename,
+      lineBufferSize,
+      options,
+      throttledProgress
+    );
     fileInfo[filename] = {
-        lineCount: results.fileStats.lineCount,
-        fileStats: results.fileStats,
-        searchCheckpoints: {}
+      lineCount: results.fileStats.lineCount,
+      fileStats: results.fileStats,
+      searchCheckpoints: {},
     };
     return {
-        lines: results.lines,  // not used
-        lineCount: results.fileStats.lineCount,
-        offset: 0
+      lines: results.lines, // not used
+      lineCount: results.fileStats.lineCount,
+      offset: 0,
     };
-})
+  }
+);
 
-ipcMain.handle('load-buffer', async (event, filename, start, lineBufferSize, options)=> {
+ipcMain.handle(
+  'load-buffer',
+  async (event, filename, start, lineBufferSize, options) => {
     const throttledProgress = throttle((p) => {
-        event.sender.send("progress-" + filename,  p);
+      event.sender.send(`progress-${filename}`, p);
     }, 200);
     if (start !== 0 && !fileInfo[filename]) {
-        throw new Error("Buffer loading happened too fast before file scan is over");
+      throw new Error(
+        'Buffer loading happened too fast before file scan is over'
+      );
     }
-    const checkpoints = start === 0 ? [] : fileInfo[filename].fileStats.checkpoints;
-    const results = await loadBuffer(filename, start, lineBufferSize, checkpoints, options, throttledProgress);
+    const checkpoints =
+      start === 0 ? [] : fileInfo[filename].fileStats.checkpoints;
+    const results = await loadBuffer(
+      filename,
+      start,
+      lineBufferSize,
+      checkpoints,
+      options,
+      throttledProgress
+    );
     return results;
+  }
+);
+
+ipcMain.handle('search-scan', async (event, filename, filter, options) => {
+  const throttledProgress = throttle((p, c) => {
+    event.sender.send('search-progress', p, c);
+  }, 200);
+  const result = await searchScan(filename, filter, options, throttledProgress); // { resultsCount: 0, checkpoints: [] };
+  fileInfo[filename].searchCheckpoints[filter.query] = result.checkpoints;
+  return { resultCount: result.resultsCount };
 });
 
-ipcMain.handle('search-scan', async (event, filename, filter, options)=> {
-    const throttledProgress = throttle((p,c) => {
-        event.sender.send("search-progress", p, c);
-    }, 200);
-    const result = await searchScan(filename, filter, options, throttledProgress); //{ resultsCount: 0, checkpoints: [] };
-    fileInfo[filename].searchCheckpoints[filter.query] = result.checkpoints;
-    return { resultCount: result.resultsCount };
-});
-
-ipcMain.handle('search-buffer', async (event, filename, filter, startLine, lineBufferSize, options)=> {
+ipcMain.handle(
+  'search-buffer',
+  async (event, filename, filter, startLine, lineBufferSize, options) => {
     const throttledProgress = throttle((p) => {
-        event.sender.send("search-progress", p);
+      event.sender.send('search-progress', p);
     }, 200);
     if (startLine !== 0 && !fileInfo[filename]) {
-        throw new Error("Buffer loading happened too fast before file scan is over");
+      throw new Error(
+        'Buffer loading happened too fast before file scan is over'
+      );
     }
 
-    return await searchBuffer(filename, filter, startLine, lineBufferSize, fileInfo[filename].searchCheckpoints[filter.query], options, throttledProgress); // { lines : LineT};
-});
+    return await searchBuffer(
+      filename,
+      filter,
+      startLine,
+      lineBufferSize,
+      fileInfo[filename].searchCheckpoints[filter.query],
+      options,
+      throttledProgress
+    ); // { lines : LineT};
+  }
+);

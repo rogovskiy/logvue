@@ -1,50 +1,66 @@
-import React, { useEffect, useState, useCallback, useRef } from "react";
-import MainLines from "./MainLines";
-import SearchLines from "./SearchLines";
-import FilterControls from "./FilterControls";
+import React, { useEffect, useState, useCallback, useRef } from 'react';
+import SplitPane from 'react-split-pane';
+import Pane from 'react-split-pane';
+import { ipcRenderer } from 'electron';
+import MainLines from './MainLines';
+import SearchLines from './SearchLines';
+import FilterControls from './FilterControls';
 
-import SplitPane from "react-split-pane";
-import Pane from "react-split-pane";
-
-import { useFileContext } from "./FileStateProvider";
-
-import { ipcRenderer} from 'electron';
+import { useFileContext } from './FileStateProvider';
 
 const FileViewer = () => {
   const { state: fileState, dispatch } = useFileContext();
   const { file, options } = fileState;
 
-  const [heights, setHeights] = useState({ resizer: "75%", main: -1, search: -1 });
+  const [heights, setHeights] = useState({
+    resizer: '75%',
+    main: -1,
+    search: -1,
+  });
   const mainRef = useRef();
   const searchRef = useRef();
   const interval = useRef(null);
 
-  console.log("file view render");
+  console.log('file view render');
 
   useEffect(() => {
     const scanFile = async () => {
-      const newBuffer = await ipcRenderer.invoke("open-file", file.path, options.bufferSize, {
-        encoding: options.encoding,
-      });
-      dispatch({ type: "file-opened", lineCount: newBuffer.lineCount });
+      const newBuffer = await ipcRenderer.invoke(
+        'open-file',
+        file.path,
+        options.bufferSize,
+        {
+          encoding: options.encoding,
+        }
+      );
+      dispatch({ type: 'file-opened', lineCount: newBuffer.lineCount });
     };
     scanFile();
   }, [file.path, dispatch, options.encoding, options.bufferSize]);
 
   const updateHeights = useCallback(
     (optionalResizer) => {
-      const searchPane = searchRef.current ? searchRef.current.parentElement.parentElement.parentElement : -1;
+      const searchPane = searchRef.current
+        ? searchRef.current.parentElement.parentElement.parentElement
+        : -1;
       // search lines area gets squished if there are no results
-      const searchAndFilter = searchRef.current ? searchRef.current.parentElement.parentElement : -1;
+      const searchAndFilter = searchRef.current
+        ? searchRef.current.parentElement.parentElement
+        : -1;
       const newHeights = {
         main: mainRef.current ? mainRef.current.parentElement.clientHeight : -1,
         search: searchRef.current
-          ? searchPane.clientHeight - searchAndFilter.clientHeight + searchRef.current.parentElement.clientHeight
+          ? searchPane.clientHeight -
+            searchAndFilter.clientHeight +
+            searchRef.current.parentElement.clientHeight
           : -1,
         resizer: optionalResizer || heights.resizer,
       };
-      if (heights.main !== newHeights.main || heights.search !== newHeights.search) {
-        console.log("check height", newHeights);
+      if (
+        heights.main !== newHeights.main ||
+        heights.search !== newHeights.search
+      ) {
+        console.log('check height', newHeights);
         setHeights(newHeights); // TODO use functional setState()
       }
     },
@@ -63,7 +79,7 @@ const FileViewer = () => {
   };
 
   return (
-    <div className="FullHeight" style={{ top: "45px" }}>
+    <div className="FullHeight" style={{ top: '45px' }}>
       <SplitPane
         split="horizontal"
         onResizeEnd={panelsResized}
@@ -79,7 +95,7 @@ const FileViewer = () => {
           <div>
             <FilterControls />
             <div>
-              {" "}
+              {' '}
               {/* extra div is needed for correct height calculation */}
               <SearchLines ref={searchRef} height={heights.search} />
             </div>

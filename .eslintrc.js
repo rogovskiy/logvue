@@ -23,4 +23,9 @@ module.exports = {
       '@typescript-eslint/parser': ['.ts', '.tsx'],
     },
   },
+  rules: {
+    'no-underscore-dangle': 'off',
+    'no-console': 'off', // TODO later,
+    'no-unused-vars': ["error", { "caughtErrorsIgnorePattern": "^_" }]
+  },
 };

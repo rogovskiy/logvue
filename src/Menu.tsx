@@ -1,16 +1,15 @@
-import React, { useState, useEffect, useCallback } from "react";
-import { Progress, Icon, Menu } from "semantic-ui-react";
+import React, { useState, useEffect, useCallback } from 'react';
+import { Progress, Icon, Menu } from 'semantic-ui-react';
 
-import { useFileContext } from "./FileStateProvider";
-import GoToLineModal from "./GoToLineModal";
+import { ipcRenderer } from 'electron';
+import { useFileContext } from './FileStateProvider';
+import GoToLineModal from './GoToLineModal';
 
-import { ipcRenderer} from 'electron';
-
-const timestampFormats = ["none", "short", "full"];
+const timestampFormats = ['none', 'short', 'full'];
 
 const fileSizeSI = (size) => {
   const e = (Math.log(size) / Math.log(1e3)) | 0;
-  return +(size / Math.pow(1e3, e)).toFixed(2) + " " + ("kMGTPEZY"[e - 1] || "") + "B";
+  return `${+(size / Math.pow(1e3, e)).toFixed(2)} ${'kMGTPEZY'[e - 1] || ''}B`;
 };
 
 const MyMenu = () => {
@@ -22,12 +21,14 @@ const MyMenu = () => {
   const fileSelected = file.path !== null;
 
   const chooseFile = useCallback(async () => {
-    const info = await ipcRenderer.invoke("show-file-open");
-    console.log("back in renderer", new Date());
+    const info = await ipcRenderer.invoke('show-file-open');
+    console.log('back in renderer', new Date());
     if (info) {
-      const { path, fileSize /*, modTime */ } = info;
-      dispatch({ type: "file-loaded", path, fileSize });
-      document.title = path.substring(1 + Math.max(path.lastIndexOf("/"), path.lastIndexOf("\\")));
+      const { path, fileSize /* , modTime */ } = info;
+      dispatch({ type: 'file-loaded', path, fileSize });
+      document.title = path.substring(
+        1 + Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\'))
+      );
     }
   }, [dispatch]);
 
@@ -37,9 +38,9 @@ const MyMenu = () => {
 
   const handleShortcuts = useCallback(
     (e, shortcut) => {
-      if (shortcut === "go-to-line" && fileSelected) {
+      if (shortcut === 'go-to-line' && fileSelected) {
         showGoToLineDialog();
-      } else if (shortcut === "file-open") {
+      } else if (shortcut === 'file-open') {
         chooseFile();
       }
     },
@@ -47,15 +48,15 @@ const MyMenu = () => {
   );
 
   useEffect(() => {
-    ipcRenderer.on("shortcut", handleShortcuts);
+    ipcRenderer.on('shortcut', handleShortcuts);
     return () => {
-      ipcRenderer.removeListener("shortcut", handleShortcuts);
+      ipcRenderer.removeListener('shortcut', handleShortcuts);
     };
   }, [handleShortcuts]);
 
   const handleGoToLine = (lineSpec) => {
     if (lineSpec) {
-      dispatch({ type: "goto", lineSpec });
+      dispatch({ type: 'goto', lineSpec });
     }
     setGoToShown(false);
   };
@@ -64,19 +65,21 @@ const MyMenu = () => {
     const progressListener = (_event, inProgress) => {
       setProgress(inProgress);
     };
-    ipcRenderer.on("progress", progressListener);
+    ipcRenderer.on('progress', progressListener);
     return () => {
-      ipcRenderer.removeListener("progress", progressListener);
+      ipcRenderer.removeListener('progress', progressListener);
     };
   }, [setProgress]);
 
   const updateOptions = (updates) => {
-    dispatch({ type: "update-options", updates });
+    dispatch({ type: 'update-options', updates });
   };
 
   const nextTimestampFormat = () => {
     const current = timestampFormats.indexOf(options.showTimestamp);
-    updateOptions({ showTimestamp: timestampFormats[(current + 1) % timestampFormats.length] });
+    updateOptions({
+      showTimestamp: timestampFormats[(current + 1) % timestampFormats.length],
+    });
   };
 
   return (
@@ -87,12 +90,18 @@ const MyMenu = () => {
           <Icon name="folder open outline" /> Open
         </Menu.Item>
         {fileSelected && (
-          <Menu.Item style={{ padding: "5px" }}>
+          <Menu.Item style={{ padding: '5px' }}>
             <Menu compact className="mini">
-              <Menu.Item active={options.textFormat !== "json"} onClick={() => updateOptions({ textFormat: "text" })}>
+              <Menu.Item
+                active={options.textFormat !== 'json'}
+                onClick={() => updateOptions({ textFormat: 'text' })}
+              >
                 <Icon name="file alternate outline" /> Text
               </Menu.Item>
-              <Menu.Item active={options.textFormat === "json"} onClick={() => updateOptions({ textFormat: "json" })}>
+              <Menu.Item
+                active={options.textFormat === 'json'}
+                onClick={() => updateOptions({ textFormat: 'json' })}
+              >
                 <Icon name="code" />
                 JSON
               </Menu.Item>
@@ -102,13 +111,15 @@ const MyMenu = () => {
               <Menu.Item
                 title="Show line numbers"
                 active={options.showLineNumber}
-                onClick={() => updateOptions({ showLineNumber: !options.showLineNumber })}
+                onClick={() =>
+                  updateOptions({ showLineNumber: !options.showLineNumber })
+                }
               >
                 <Icon name="list ol" />
               </Menu.Item>
               <Menu.Item
                 title="Show timestamps"
-                active={options.showTimestamp !== "none"}
+                active={options.showTimestamp !== 'none'}
                 onClick={nextTimestampFormat}
               >
                 <Icon name="clock outline" />
@@ -117,7 +128,7 @@ const MyMenu = () => {
           </Menu.Item>
         )}
         {fileSelected && (
-          <Menu.Item style={{ padding: "5px" }} onClick={showGoToLineDialog}>
+          <Menu.Item style={{ padding: '5px' }} onClick={showGoToLineDialog}>
             <Icon name="share" /> Jump To
           </Menu.Item>
         )}

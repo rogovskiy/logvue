@@ -1,16 +1,16 @@
-import React from "react";
+import React from 'react';
 
-import FileViewer from "./FileViewer";
-import Menu from "./Menu";
+import FileViewer from './FileViewer';
+import Menu from './Menu';
 
-import { useFileContext } from "./FileStateProvider";
+import { useFileContext } from './FileStateProvider';
 
 const App = () => {
   const { state: fileState } = useFileContext();
   const { file } = fileState;
   const fileSelected = file.path !== null;
 
-  console.log("app render");
+  console.log('app render');
 
   return (
     <div>

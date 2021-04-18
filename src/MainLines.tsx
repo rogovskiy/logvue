@@ -1,9 +1,8 @@
-import React, { useCallback } from "react";
+import React, { useCallback } from 'react';
 
-import { useFileContext } from "./FileStateProvider";
-import Lines from "./Lines";
-
-import { ipcRenderer} from 'electron';
+import { ipcRenderer } from 'electron';
+import { useFileContext } from './FileStateProvider';
+import Lines from './Lines';
 
 const MainLines = React.forwardRef(({ height }, ref) => {
   const { state: fileState, dispatch } = useFileContext();
@@ -11,24 +10,30 @@ const MainLines = React.forwardRef(({ height }, ref) => {
 
   const loadLines = useCallback(
     async (start, bufferSize) => {
-      return await ipcRenderer.invoke("load-buffer", file.path, start, bufferSize, {
-        textFormat: options.textFormat,
-        jsonOptions: options.jsonOptions,
-        textOptions: options.textOptions,
-        encoding: options.encoding,
-      }); // { lines, offset }
+      return await ipcRenderer.invoke(
+        'load-buffer',
+        file.path,
+        start,
+        bufferSize,
+        {
+          textFormat: options.textFormat,
+          jsonOptions: options.jsonOptions,
+          textOptions: options.textOptions,
+          encoding: options.encoding,
+        }
+      ); // { lines, offset }
     },
     [file.path, options]
   );
   const gotoLine = useCallback(
     (lineSpec) => {
-      dispatch({ type: "goto", lineSpec });
+      dispatch({ type: 'goto', lineSpec });
     },
     [dispatch]
   );
   const activateLine = useCallback(
     (line) => {
-      dispatch({ type: "activate-line", lineNo: line.lineNo });
+      dispatch({ type: 'activate-line', lineNo: line.lineNo });
     },
     [dispatch]
   );

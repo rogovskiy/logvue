@@ -1,11 +1,12 @@
+/* eslint no-continue: off */
 export const parseLineSpec = (spec, lineCount, currentLine) => {
   let result;
-  if (spec[0] === "+") {
-    result = currentLine + parseInt(spec.substring(1));
-  } else if (spec[0] === "-") {
-    result = currentLine - parseInt(spec.substring(1));
+  if (spec[0] === '+') {
+    result = currentLine + parseInt(spec.substring(1), 10);
+  } else if (spec[0] === '-') {
+    result = currentLine - parseInt(spec.substring(1), 10);
   } else {
-    result = parseInt(spec);
+    result = parseInt(spec, 10);
   }
   if (result < 0) {
     result = 0;
@@ -29,8 +30,8 @@ export const mergeLines = (search, marks, searchCount) => {
       ? marks[marks.length - 1].lineNo
       : search[search.length - 1].lineNo;
   const result = [];
-  let mi = 0,
-    si = 0;
+  let mi = 0;
+  let si = 0;
   // console.log("mark  ", marksFirst, marksEnd, search)
 
   while (mi < marks.length || si < search.length) {
@@ -38,7 +39,7 @@ export const mergeLines = (search, marks, searchCount) => {
     const searchLine = si < search.length ? search[si] : null;
     // console.log("indx ", mi, si)
     if (markLine && markLine.lineNo < marksFirst) {
-      mi++;
+      mi += 1;
       continue;
     }
     if (markLine && markLine.lineNo > marksEnd) {
@@ -48,16 +49,22 @@ export const mergeLines = (search, marks, searchCount) => {
     if (searchLine === null && markLine === null) {
       break;
     }
-    if (searchLine == null || (markLine && markLine.lineNo < searchLine.lineNo)) {
+    if (
+      searchLine == null ||
+      (markLine && markLine.lineNo < searchLine.lineNo)
+    ) {
       // console.log("mi ", mi, si)
-      result.push({ ...markLine, searchLine: search[si > 0 ? si - 1 : 0].searchLine });
-      mi++;
+      result.push({
+        ...markLine,
+        searchLine: search[si > 0 ? si - 1 : 0].searchLine,
+      });
+      mi += 1;
     } else {
       result.push(searchLine);
       if (markLine && markLine.lineNo === searchLine.lineNo) {
-        mi++;
+        mi += 1;
       }
-      si++;
+      si += 1;
     }
   }
   return result;
