@@ -1,0 +1,121 @@
+import * as fs from 'fs';
+import * as wasm from "./byline/pkg/byline.js";
+
+const readLinesFromBuffer = (buffer, bufferEnd, encoding, fileOffset, truncatedLine, lineCallback) => {
+    let offset = 0;
+    let isFirst = true;
+    // console.log("buffer", fileOffset)
+    const indexes = wasm.split_lines(buffer.slice(0, bufferEnd)).result();
+
+    let i = 0, len = indexes.length; 
+    let line;
+    for (; i < len; i++) {
+        const new_offset = indexes[i];
+        line = buffer.toString(encoding, offset, new_offset).trimEnd();
+        let options = null;
+        if (isFirst && truncatedLine) {
+            // console.log("Truncation done", line.length, offset, index);
+            line = truncatedLine;
+            options = { truncated: true };
+        }
+        // console.log(offset, index);
+        if (line.length > 0) {
+            const continueLoop = lineCallback(line, offset + fileOffset, options);
+            if (continueLoop === false) {
+                break;
+            }
+        }
+        offset = new_offset;
+        isFirst = false;
+    }
+    return offset;
+}
+
+const scanFile = async (filename, encoding, bufferSize, lineCallback) => {
+    const buffer = Buffer.alloc(bufferSize)
+    const fileHandle = await fs.promises.open(filename, "r")
+    let unusedOffset;
+    let fileRead = 0;
+    try {
+        let fileOffset = 0;     // current position in file
+        let bufferOffset = 0;   // fill buffer starting offset
+        let bytesRead;
+        let truncatedLine = null;
+        let truncationIncrement;
+        do {
+            // console.log("reading ", fileOffset, bufferOffset, buffer.length)
+            if (buffer.length === bufferOffset) {
+                if (truncatedLine == null) {
+                    truncatedLine = buffer.toString(encoding, 0, buffer.length);
+                    truncationIncrement = 0;
+                }
+                bufferOffset = 0;
+                truncationIncrement++;
+            }
+            if (bufferOffset < 0) {
+                console.error("Buffer offset is negative")
+                break;
+            }
+            const readBytesPromise = new Promise((resolve, reject) => {
+                fs.read(fileHandle.fd, buffer, bufferOffset, buffer.length - bufferOffset, fileOffset, (err, _bytesRead, _buffer) => {
+                    resolve(_bytesRead)
+                });
+            })
+            fileRead++;
+            bytesRead = await readBytesPromise;
+            const bufferEnd = bytesRead + bufferOffset;
+            // console.log("bytes read3 ", bytesRead)
+            if (bytesRead === 0) {
+                break;
+            }
+            unusedOffset = readLinesFromBuffer(buffer, bufferEnd, encoding, fileOffset - bufferOffset, truncatedLine, lineCallback);
+            if (truncatedLine && unusedOffset !== 0) {
+                // console.log("truncatedLine unset", truncationIncrement)
+                truncationIncrement = 0;
+                truncatedLine = null;
+            }
+            buffer.copy(buffer, 0, unusedOffset, bufferEnd);
+            bufferOffset = bufferEnd - unusedOffset;
+            // console.log("oo", bufferOffset, bytesRead, unusedOffset);
+            fileOffset += bytesRead;
+        } while (bytesRead > 0);
+        if (bufferOffset > 0) {
+            // last line
+            // console.log("last line [" +  "...." + "]", bufferOffset, buffer.toString(encoding, 0, bufferOffset).length)
+            lineCallback(buffer.toString(encoding, 0, bufferOffset), fileOffset - bufferOffset);
+        }
+    } finally {
+        await fileHandle.close();
+        console.log('Reads ' + fileRead)
+    }
+}
+
+export const openFile = async (filename, lineBufferSize, options, progressCallback) => {
+    const { encoding, bufferSize } = options;
+
+    const lines = [];
+    let lineCount = 0;
+
+    const fileStat = await fs.promises.stat(filename);
+
+    let lastUpdate = 0;
+    const totalLength = fileStat.size ;
+    const updateFrequency = totalLength / 1000;
+
+    await scanFile(filename, (encoding || 'utf8'), (bufferSize || 2000 * 1024), (line, offset) => {
+        if (lines.length < lineBufferSize) {
+            lines.push({ line, offset});
+        }
+        if (progressCallback && (offset - lastUpdate) >  updateFrequency) {
+            progressCallback(100 * offset / totalLength);
+            lastUpdate = offset;
+            // console.log("line count", lines.length)
+        }
+        lineCount++;
+    });
+    progressCallback(0); // done
+    return { lines, lineCount }
+
+}
+
+export default { scanFile, openFile }
