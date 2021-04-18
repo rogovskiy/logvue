@@ -26,6 +26,6 @@ module.exports = {
   rules: {
     'no-underscore-dangle': 'off',
     'no-console': 'off', // TODO later,
-    'no-unused-vars': ["error", { "caughtErrorsIgnorePattern": "^_" }]
+    'no-unused-vars': ["error", {  "argsIgnorePattern": "^_", "caughtErrorsIgnorePattern": "^_" }]
   },
 };
