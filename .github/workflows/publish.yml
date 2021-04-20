@@ -3,7 +3,7 @@ name: Publish
 on:
   create:
     tags:
-      - v*
+      - 'v*.*.*'
 jobs:
   publish:
     runs-on: ${{ matrix.os }}
@@ -51,4 +51,5 @@ jobs:
           # This is used for uploading release assets to github
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}"
           yarn postinstall && yarn build && yarn electron-builder --publish always --win --mac --linux
