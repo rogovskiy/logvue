@@ -16,7 +16,7 @@ const GoToLineModal = (props) => {
   }, [show, setGotoSpec]);
 
   const handleKeys = (e) => {
-    const gotoSpec = e.target.value;
+    const gotoSpec = e.target.value; // eslint-disable-line
     if (e.key === 'ArrowUp') {
       const val =
         gotoSpec[0] === '+' || gotoSpec[0] === '-'

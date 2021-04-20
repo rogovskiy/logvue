@@ -1,4 +1,9 @@
-const parseJson = (lineObject: LineT, jsonOptions: JsonOptionsT): LineT => {
+import type { LineT, JsonOptionsT, TextOptionsT } from '../types';
+
+export const parseJson = (
+  lineObject: LineT,
+  jsonOptions: JsonOptionsT
+): LineT => {
   try {
     const parsed = JSON.parse(lineObject.line);
     parsed._message = parsed[jsonOptions.message] || lineObject.line;
@@ -16,7 +21,7 @@ const parseJson = (lineObject: LineT, jsonOptions: JsonOptionsT): LineT => {
 };
 
 const KEY_VALUE_RE = /([a-z0-9]+)=([a-z0-9]+)/g;
-const parsePlainText = (
+export const parsePlainText = (
   lineObject: LineT,
   textOptions: TextOptionsT
 ): LineT => {
@@ -27,24 +32,24 @@ const parsePlainText = (
       parsed[key] = value;
     }
   }
+  /* eslint-disable */
   if (textOptions.timestampPattern) {
     // /^(.{25})/
     const ts = lineObject.line.match(textOptions.timestampPattern);
     if (ts) {
-      parsed._message = lineObject.line
+      parsed['_message'] = lineObject.line 
         .replace(textOptions.timestampPattern, '')
         .trimLeft();
-      parsed._ts = ts[0]; // eslint-disable-line
+      parsed['_ts'] = ts[0]; 
     } else {
-      parsed._message = lineObject.line;
+      parsed['_message'] = lineObject.line;
     }
   } else {
-    parsed._message = lineObject.line;
+    parsed['_message'] = lineObject.line; 
   }
+  /* eslint-enable */
   return {
     ...lineObject,
     ...parsed,
   };
 };
-
-module.exports = { parseJson, parsePlainText };

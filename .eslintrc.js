@@ -1,9 +1,5 @@
 module.exports = {
   extends: 'erb',
-  rules: {
-    // A temporary hack related to IDE not resolving correct package.json
-    'import/no-extraneous-dependencies': 'off',
-  },
   parserOptions: {
     ecmaVersion: 2020,
     sourceType: 'module',
@@ -26,6 +22,19 @@ module.exports = {
   rules: {
     'no-underscore-dangle': 'off',
     'no-console': 'off', // TODO later,
-    'no-unused-vars': ["error", {  "argsIgnorePattern": "^_", "caughtErrorsIgnorePattern": "^_" }]
+    '@typescript-eslint/no-explicit-any': 'off', // TODO later
+    'no-unused-vars': [
+      'error',
+      { argsIgnorePattern: '^_', caughtErrorsIgnorePattern: '^_' },
+    ],
+    '@typescript-eslint/no-unused-vars': [
+      'error',
+      { argsIgnorePattern: '^_', caughtErrorsIgnorePattern: '^_' },
+    ],
+    'import/no-extraneous-dependencies': 'off', // due to electron project structure
+    'react/display-name': 'off',
+    'react/prop-types': 'off', // TODO later
+    'react/destructuring-assignment': 'off', // TODO later
+    'react/sort-comp': 'off',
   },
 };

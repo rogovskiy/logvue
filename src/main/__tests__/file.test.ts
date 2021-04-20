@@ -6,12 +6,14 @@ import {
   searchBuffer,
 } from '../file';
 
+import type { FileOptionsT } from '../file';
+
 const testFilePath = (filename) => {
   return `${__dirname.replace('/lib', '/src')}/${filename}`;
 };
 
 test('scan small file', async () => {
-  const lines = [];
+  const lines: string[] = [];
   await scanFile(
     testFilePath('sample.txt'),
     null,
@@ -19,6 +21,7 @@ test('scan small file', async () => {
     1000,
     (line, _lineNo, _offset) => {
       lines.push(line);
+      return true;
     }
   );
   expect(lines).toStrictEqual(['one', 'two  two', 'three', 'four']);
@@ -30,8 +33,8 @@ test('openFile small file', async () => {
     testFilePath('sample.txt'),
     10,
     { encoding: 'utf-8' },
-    (p) => {
-      numberNotifies++;
+    () => {
+      numberNotifies += 1;
     }
   );
   expect(result.fileStats.lineCount).toBe(4);
@@ -50,15 +53,10 @@ test.each`
   ${4}
   ${100}
 `('openFile larger file (buffer: $bufferSize KB)', async ({ bufferSize }) => {
-  let numberNotifies = 0;
-  const result = await openFile(
-    testFilePath('larger_file.html'),
-    500,
-    { encoding: 'utf-8', bufferSize: bufferSize * 1024 },
-    (p) => {
-      numberNotifies++;
-    }
-  );
+  const result = await openFile(testFilePath('larger_file.html'), 500, {
+    encoding: 'utf-8',
+    bufferSize: bufferSize * 1024,
+  });
   expect(result.fileStats.lineCount).toBe(5944); // non-empty lines
   expect(result.lines.slice(0, 4)).toStrictEqual([
     { line: '<!DOCTYPE html>', offset: 0, lineNo: 0 },
@@ -91,8 +89,8 @@ test('loadBuffer small', async () => {
     10,
     [],
     {},
-    (p) => {
-      numberNotifies++;
+    () => {
+      numberNotifies += 1;
     }
   );
 
@@ -117,8 +115,8 @@ test('loadBuffer larger file without checkpoints', async () => {
     50,
     [],
     {},
-    (p) => {
-      numberNotifies++;
+    () => {
+      numberNotifies += 1;
     }
   );
 
@@ -142,12 +140,9 @@ test('loadBuffer larger file without checkpoints', async () => {
 
 test('loadBuffer larger file with checkpoints', async () => {
   let numberNotifies = 0;
-  const result = await openFile(
-    testFilePath('larger_file.html'),
-    10,
-    { encoding: 'utf-8' },
-    null
-  );
+  const result = await openFile(testFilePath('larger_file.html'), 10, {
+    encoding: 'utf-8',
+  });
 
   const buffer = await loadBuffer(
     testFilePath('larger_file.html'),
@@ -155,9 +150,9 @@ test('loadBuffer larger file with checkpoints', async () => {
     50,
     result.fileStats.checkpoints,
     {},
-    (p) => {
+    () => {
       // TODO add checkpoints
-      numberNotifies++;
+      numberNotifies += 1;
     }
   );
 
@@ -213,10 +208,10 @@ test('search string in a small file using start line', async () => {
 test('buffered search', async () => {
   // for i in {0..1000}; do echo aaa $i; echo bbb $i; echo ccc $i;  done > src/__tests__/search_test.txt
   const testFile = testFilePath('search_test.txt');
-  const options = { encoding: 'utf8', bufferSize: 100 };
+  const options: FileOptionsT = { encoding: 'utf8', bufferSize: 100 };
   const searchQuery = { query: 'aaa' };
 
-  const result = await openFile(testFile, 10, options, null);
+  await openFile(testFile, 10, options);
   // console.log("file open", result);
 
   const searchResult = await searchScan(

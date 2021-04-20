@@ -23,7 +23,6 @@ import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 
 import fs from 'fs';
-import os from 'os';
 import throttle from 'lodash.throttle';
 
 import { loadBuffer, openFile, searchScan, searchBuffer } from './main/file';
@@ -153,7 +152,7 @@ app.on('activate', () => {
 
 const fileInfo = {};
 
-ipcMain.handle('show-file-open', async (event, arg) => {
+ipcMain.handle('show-file-open', async (_event, _arg) => {
   const options = {
     title: 'Open a log file',
     // defaultPath: '/path/to/something/',
@@ -169,11 +168,11 @@ ipcMain.handle('show-file-open', async (event, arg) => {
   if (result.canceled) {
     return null;
   }
-  const path = result.filePaths[0];
+  const filePath = result.filePaths[0];
   console.log('Stat', new Date());
-  const stat = await fs.promises.stat(path);
+  const stat = await fs.promises.stat(filePath);
   console.log('Return', new Date());
-  return { path, fileSize: stat.size, modTime: stat.mtime };
+  return { path: filePath, fileSize: stat.size, modTime: stat.mtime };
 });
 
 ipcMain.handle(
@@ -247,7 +246,7 @@ ipcMain.handle(
       );
     }
 
-    return await searchBuffer(
+    return searchBuffer(
       filename,
       filter,
       startLine,

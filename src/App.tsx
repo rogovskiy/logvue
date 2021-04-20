@@ -15,7 +15,7 @@ const App = () => {
   return (
     <div>
       <Menu />
-      {fileSelected && <FileViewer file={file.path} />}
+      {fileSelected && <FileViewer />}
     </div>
   );
 };

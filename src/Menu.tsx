@@ -7,10 +7,12 @@ import GoToLineModal from './GoToLineModal';
 
 const timestampFormats = ['none', 'short', 'full'];
 
-const fileSizeSI = (size) => {
+/* eslint-disable */
+const fileSizeSI = (size: number) => {
   const e = (Math.log(size) / Math.log(1e3)) | 0;
   return `${+(size / Math.pow(1e3, e)).toFixed(2)} ${'kMGTPEZY'[e - 1] || ''}B`;
 };
+/* eslint-enable */
 
 const MyMenu = () => {
   const [progress, setProgress] = useState(0);
@@ -37,7 +39,7 @@ const MyMenu = () => {
   }, [setGoToShown]);
 
   const handleShortcuts = useCallback(
-    (e, shortcut) => {
+    (_e, shortcut) => {
       if (shortcut === 'go-to-line' && fileSelected) {
         showGoToLineDialog();
       } else if (shortcut === 'file-open') {
@@ -62,7 +64,7 @@ const MyMenu = () => {
   };
 
   useEffect(() => {
-    const progressListener = (_event, inProgress) => {
+    const progressListener = (_event, inProgress: number) => {
       setProgress(inProgress);
     };
     ipcRenderer.on('progress', progressListener);
@@ -136,7 +138,7 @@ const MyMenu = () => {
           {fileSelected && (
             <Menu.Item>
               <Icon name="info" />
-              {fileSizeSI(file.fileSize)}
+              {fileSizeSI(file.fileSize || 0)}
             </Menu.Item>
           )}
           <Menu.Item>

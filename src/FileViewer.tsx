@@ -1,7 +1,9 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
-import SplitPane from 'react-split-pane';
-import Pane from 'react-split-pane';
+
+import SplitPane from 'react-split-pane/lib/SplitPane';
+import Pane from 'react-split-pane/lib/Pane';
 import { ipcRenderer } from 'electron';
+
 import MainLines from './MainLines';
 import SearchLines from './SearchLines';
 import FilterControls from './FilterControls';
@@ -12,14 +14,18 @@ const FileViewer = () => {
   const { state: fileState, dispatch } = useFileContext();
   const { file, options } = fileState;
 
-  const [heights, setHeights] = useState({
+  const [heights, setHeights] = useState<{
+    resizer: string;
+    main: number;
+    search: number;
+  }>({
     resizer: '75%',
     main: -1,
     search: -1,
   });
-  const mainRef = useRef();
-  const searchRef = useRef();
-  const interval = useRef(null);
+  const mainRef = useRef<any>();
+  const searchRef = useRef<any>();
+  const interval = useRef<any>(null);
 
   console.log('file view render');
 

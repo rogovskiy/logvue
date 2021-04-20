@@ -4,24 +4,22 @@ import { ipcRenderer } from 'electron';
 import { useFileContext } from './FileStateProvider';
 import Lines from './Lines';
 
-const MainLines = React.forwardRef(({ height }, ref) => {
+type MainLinesProps = {
+  height: number;
+};
+
+const MainLines = React.forwardRef<any, MainLinesProps>(({ height }, ref) => {
   const { state: fileState, dispatch } = useFileContext();
   const { options, file } = fileState;
 
   const loadLines = useCallback(
     async (start, bufferSize) => {
-      return await ipcRenderer.invoke(
-        'load-buffer',
-        file.path,
-        start,
-        bufferSize,
-        {
-          textFormat: options.textFormat,
-          jsonOptions: options.jsonOptions,
-          textOptions: options.textOptions,
-          encoding: options.encoding,
-        }
-      ); // { lines, offset }
+      return ipcRenderer.invoke('load-buffer', file.path, start, bufferSize, {
+        textFormat: options.textFormat,
+        jsonOptions: options.jsonOptions,
+        textOptions: options.textOptions,
+        encoding: options.encoding,
+      }); // { lines, offset }
     },
     [file.path, options]
   );
@@ -41,7 +39,7 @@ const MainLines = React.forwardRef(({ height }, ref) => {
   return (
     <Lines
       ref2={ref}
-      id={file.path}
+      id={file.path!}
       height={height}
       loadLines={loadLines}
       currentLine={file.currentLine}

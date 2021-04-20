@@ -1,8 +1,13 @@
 import fs from 'fs';
 import { parseJson, parsePlainText } from './parsers';
+import type {
+  LineT,
+  FileEncodingT,
+  JsonOptionsT,
+  TextOptionsT,
+} from '../types';
 
-type FileEncodingT = 'utf-8' | 'utf8';
-type FileOptionsT = {
+export type FileOptionsT = {
   encoding?: FileEncodingT;
   bufferSize?: number;
   numCheckpoints?: number;
@@ -10,8 +15,6 @@ type FileOptionsT = {
   jsonOptions?: JsonOptionsT;
   textOptions?: TextOptionsT;
 };
-type JsonOptionsT = { timestamp: string; message: string };
-type TextOptionsT = { extractKeyValue: boolean; timestampPattern: string };
 type FileStatsT = {
   lineCount: number;
   fileSize: number;
@@ -23,7 +26,6 @@ type SearchCheckpointT = {
   lineNo: number;
   offset: number;
 };
-type LineT = { line: string; offset: number; lineNo: number; options?: any };
 type LineOptionsT = { truncated?: boolean };
 
 type ProgressCallbackFn = (progress: number, count: number) => void;
@@ -32,12 +34,12 @@ type LineCallbackFn = (
   lineNo: number,
   offsetNumber: number,
   options?: LineOptionsT
-) => boolean | null | undefined;
+) => boolean;
 type SearchT = { query: string };
-type FileInfoT = {
-  fileStats: { checkpoints: Array<CheckpointT> };
-  searchCheckpoints: Map<string, CheckpointT>;
-};
+// type FileInfoT = { // eslint-disable-line
+//   fileStats: { checkpoints: Array<CheckpointT> };
+//   searchCheckpoints: Map<string, CheckpointT>;
+// };
 
 const DEFAULT_BUFFER = 500 * 1024;
 const DEFAULT_CHECKPOINTS = 1000;
@@ -50,7 +52,7 @@ const readLinesFromBuffer = (
   truncatedLine: string | null,
   startLine: number,
   lineCallback
-) => {
+): [number, number, boolean] => {
   let offset = 0;
   let lineCounter = startLine;
   let stopped = false;
@@ -61,7 +63,7 @@ const readLinesFromBuffer = (
     const b = buffer[index];
     if (b === 0xd || b === 0xa) {
       let line = buffer.toString(encoding, offset, index).trimEnd();
-      let options = null;
+      let options: LineOptionsT | null = null;
       if (offset === 0 && truncatedLine) {
         // console.log("Truncation done", line.length, offset, index);
         line = truncatedLine;
@@ -99,15 +101,14 @@ export const scanFile = async (
 ): Promise<void> => {
   const buffer = Buffer.alloc(bufferSize);
   const fileHandle = await fs.promises.open(filename, 'r');
-  let unusedOffset;
-  let fileRead = 0;
+  // let fileRead = 0;
   try {
     let fileOffset = startingCheckpoint ? startingCheckpoint.offset : 0; // current position in file
     // console.log("starting ", startingCheckpoint)
     let lastLine = startingCheckpoint ? startingCheckpoint.lineNo : 0;
     let bufferOffset = 0; // fill buffer starting offset
     let bytesRead;
-    let truncatedLine = null;
+    let truncatedLine: string | null = null;
     let iterationStopped = false;
     // let truncationIncrement;
     do {
@@ -124,7 +125,7 @@ export const scanFile = async (
         console.error('Buffer offset is negative');
         break;
       }
-      const readBytesPromise = new Promise((resolve, reject) => {
+      const readBytesPromise = new Promise((resolve, reject) => { // eslint-disable-line
         fs.read(
           fileHandle.fd,
           buffer,
@@ -132,11 +133,15 @@ export const scanFile = async (
           buffer.length - bufferOffset,
           fileOffset,
           (err, _bytesRead, _buffer) => {
-            resolve(_bytesRead);
+            if (err) {
+              reject(err);
+            } else {
+              resolve(_bytesRead);
+            }
           }
         );
       });
-      fileRead += 1;
+      // fileRead += 1;
       bytesRead = await readBytesPromise; // eslint-disable-line
       const bufferEnd = bytesRead + bufferOffset;
       // console.log("bytes read3 ", bytesRead)
@@ -186,11 +191,11 @@ export const openFile = async (
   filename: string,
   lineBufferSize: number,
   options: FileOptionsT,
-  progressCallback: ProgressCallbackFn | null
+  progressCallback?: ProgressCallbackFn
 ): Promise<{ lines: Array<LineT>; fileStats: FileStatsT }> => {
   const { encoding, bufferSize, numCheckpoints } = options;
 
-  const lines = [];
+  const lines: LineT[] = [];
   const lineCount = 0;
 
   const fileStat = await fs.promises.stat(filename);
@@ -201,7 +206,11 @@ export const openFile = async (
   const updateFrequency = totalLength / 300;
   const checkpointFrequency =
     totalLength / (numCheckpoints || DEFAULT_CHECKPOINTS);
-  const result = { lineCount: 0, fileSize: totalLength, checkpoints: [] };
+  const result: {
+    lineCount: number;
+    fileSize: number;
+    checkpoints: CheckpointT[];
+  } = { lineCount: 0, fileSize: totalLength, checkpoints: [] };
 
   await scanFile(
     filename,
@@ -222,6 +231,7 @@ export const openFile = async (
         lastCheckpointUpdate = offset;
       }
       result.lineCount += 1;
+      return true;
     }
   );
   if (progressCallback) {
@@ -230,12 +240,28 @@ export const openFile = async (
   return { lines, fileStats: result };
 };
 
+const createLineParser = (options) => {
+  let lineParser;
+  if (options.textFormat === 'json') {
+    const jo = options.jsonOptions;
+    if (jo != null) {
+      lineParser = (lineObject) => parseJson(lineObject, jo);
+    }
+  } else {
+    const to = options.textOptions;
+    if (to != null) {
+      lineParser = (lineObject) => parsePlainText(lineObject, to);
+    }
+  }
+  return lineParser;
+};
+
 const locateClosestOffsetToLine = <T>(
   checkpoints: Array<T>,
   line,
-  mapper: (T) => number
+  mapper: (line: T) => number
 ): T | null => {
-  let closest = null;
+  let closest: T | null = null;
   for (let idx = 0; idx < checkpoints.length; idx++) { // eslint-disable-line
     const cp = checkpoints[idx];
     if (mapper(cp) < line) {
@@ -251,13 +277,13 @@ export const loadBuffer = async (
   filename: string,
   start: number,
   lineBufferSize: number,
-  checkpoints: Array<CheckpointT>,
+  checkpoints: CheckpointT[],
   options: FileOptionsT,
   progressCallback: ProgressCallbackFn
-): Promise<{ lines: Array<LineT>; offset: number }> => {
+): Promise<{ lines: LineT[]; offset: number }> => {
   const { encoding, bufferSize } = options;
 
-  const lines = [];
+  const lines: LineT[] = [];
 
   let lastUpdate = 0;
 
@@ -302,6 +328,7 @@ export const loadBuffer = async (
           lastUpdate = lineNo;
         }
       }
+      return true;
     }
   );
   progressCallback(0, 0); // done
@@ -312,39 +339,19 @@ const matchesSearch = (line: LineT, search: SearchT): boolean => {
   return line.line.match(search.query) != null;
 };
 
-const createLineParser = (options) => {
-  let lineParser;
-  if (options.textFormat === 'json') {
-    const jo = options.jsonOptions;
-    if (jo != null) {
-      lineParser = (lineObject) => parseJson(lineObject, jo);
-    }
-  } else {
-    const to = options.textOptions;
-    if (to != null) {
-      lineParser = (lineObject) => parsePlainText(lineObject, to);
-    }
-  }
-  return lineParser;
-};
-
 // returns a buffer of lines starting the given line number
 export const searchBuffer = async (
   filename: string,
   search: SearchT,
   startLineNo: number,
   lineBufferSize: number,
-  checkpoints: Array<SearchCheckpointT>,
+  checkpoints: SearchCheckpointT[],
   options: FileOptionsT,
   progressCallback: ProgressCallbackFn
-): Promise<{ lines: Array<LineT> }> => {
-  const { encoding, bufferSize, numCheckpoints } = options;
+): Promise<{ lines: LineT[] }> => {
+  const { encoding, bufferSize } = options;
 
-  const lines = [];
-  const lineCount = 0;
-
-  const fileStat = await fs.promises.stat(filename);
-
+  const lines: LineT[] = [];
   const lineParser = createLineParser(options);
 
   let startingCheckpoint = { lineNo: 0, offset: 0, searchLineNo: 0 };
@@ -376,11 +383,11 @@ export const searchBuffer = async (
         lineObject = lineParser(lineObject);
       }
       if (!matchesSearch(lineObject, search)) {
-        return;
+        return true;
       }
       if (toBeSkipped > 0) {
         toBeSkipped -= 1;
-        return;
+        return true;
       }
       if (lines.length < lineBufferSize) {
         lines.push(lineObject);
@@ -395,6 +402,7 @@ export const searchBuffer = async (
           lastUpdate = lines.length;
         }
       }
+      return true;
     }
   );
   if (progressCallback) {
@@ -409,22 +417,23 @@ export const searchScan = async (
   search: SearchT,
   options: FileOptionsT,
   progressCallback: ProgressCallbackFn
-): Promise<{ resultsCount: number; checkpoints: Array<SearchCheckpointT> }> => {
+): Promise<{ resultsCount: number; checkpoints: SearchCheckpointT[] }> => {
   const { encoding, bufferSize, numCheckpoints } = options;
-
-  const lineCount = 0;
 
   const fileStat = await fs.promises.stat(filename);
 
   const lineParser = createLineParser(options);
 
   let lastUpdate = 0;
-  const lastCheckpointUpdate = 0;
+  let lastCheckpointUpdate = 0;
   const totalLength = fileStat.size;
   const updateFrequency = totalLength / 300;
   const checkpointFrequency =
     totalLength / (numCheckpoints || DEFAULT_CHECKPOINTS);
-  const result = { resultsCount: 0, checkpoints: [] };
+  const result: { resultsCount: number; checkpoints: SearchCheckpointT[] } = {
+    resultsCount: 0,
+    checkpoints: [],
+  };
 
   await scanFile(
     filename,
@@ -436,18 +445,23 @@ export const searchScan = async (
         progressCallback((100 * offset) / totalLength, result.resultsCount);
         lastUpdate = offset;
       }
-      // if ((offset - lastCheckpointUpdate) > checkpointFrequency) {
-      //     result.checkpoints.push({ lineNo, offset, searchLineNo: result.resultsCount });
-      //     lastCheckpointUpdate = offset;
-      // }
+      if (offset - lastCheckpointUpdate > checkpointFrequency) {
+        result.checkpoints.push({
+          lineNo,
+          offset,
+          searchLineNo: result.resultsCount,
+        });
+        lastCheckpointUpdate = offset;
+      }
       let lineObject = { line, lineNo, offset };
       if (lineParser) {
         lineObject = lineParser(lineObject);
       }
       if (!matchesSearch(lineObject, search)) {
-        return;
+        return true;
       }
       result.resultsCount += 1;
+      return true;
     }
   );
   if (progressCallback) {

@@ -1,14 +1,29 @@
-import React from 'react';
+import React, { FunctionComponent } from 'react';
 import throttle from 'lodash.throttle';
 import CustomScrollbar from './CustomScrollbar';
 import LineSelector from './LineSelector';
 
 import { FileContext } from './FileStateProvider';
 
+import type { LineT, ShowTimestampOptionT } from './types';
+
 const HANDLE_SIZE = 20; // TODO this needs to be dynamic
 const EMPTY_BUFFER = { lines: null, offset: 0 };
 
-const LineBuffer = React.memo(
+type LineBufferProps = {
+  tableRef: React.RefObject<HTMLTableElement>;
+  height: number;
+  lines: LineT[] | null;
+  showTimestamp: ShowTimestampOptionT;
+  showLineNumber: boolean;
+  selectedLines: LineT[];
+  onLineClick: any;
+  dispatch: React.Dispatch<any>;
+  activeLine: number | null;
+  lineCount: number;
+};
+
+const LineBuffer: FunctionComponent<LineBufferProps> = React.memo(
   ({
     tableRef,
     height,
@@ -40,7 +55,7 @@ const LineBuffer = React.memo(
     console.log('LINEBUFFER RENDER ');
     const colspan = showLineNumber ? 4 : 3;
     const lastLine = lines ? lines[lines.length - 1] : null;
-    const lastLineNo = lastLine
+    const lastLineNo = lastLine // eslint-disable-line
       ? lastLine.searchLine
         ? lastLine.searchLine
         : lastLine.lineNo
@@ -55,9 +70,9 @@ const LineBuffer = React.memo(
         >
           <tbody>
             {lines &&
-              lines.map((l, idx) => (
+              lines.map((l) => (
                 <tr
-                  key={idx}
+                  key={l.lineNo}
                   onClick={() => onLineClick(l)}
                   className={activeLine === l.lineNo ? 'selected' : ''}
                 >
@@ -106,11 +121,33 @@ const LineBuffer = React.memo(
   }
 );
 
+type LinesProps = {
+  id: string;
+  gotoLine: any;
+  currentLine: number;
+  height: number;
+  lineCount: number;
+  ref2: React.ForwardedRef<any>;
+  loadLines: any;
+  onLineClick: any;
+};
+type LinesState = {
+  buffer: {
+    lines: LineT[] | null;
+    offset: number;
+  };
+};
+declare global {
+  interface Window {
+    focused?: string;
+  }
+}
+
 // Renders a scrollable buffer of lines. This component uses DOM events to allow scrolling within the buffer without leveraging of
 // the React functionality. The buffer refresh is handled by React render.
 // const RefLines = React.forwardRef((props, ref) => {
-class Lines extends React.Component {
-  static contextType = FileContext;
+class Lines extends React.Component<LinesProps, LinesState> {
+  private tableRef = React.createRef<HTMLTableElement>();
 
   constructor(props) {
     super(props);
@@ -123,7 +160,6 @@ class Lines extends React.Component {
     console.log('===========');
     console.log('===========');
     console.log('===========');
-    this.tableRef = React.createRef();
 
     this.state = {
       buffer: EMPTY_BUFFER,
@@ -172,7 +208,8 @@ class Lines extends React.Component {
 
   handleWheel = (event) => {
     // console.log("wheel", event.deltaY, this.props.currentLine, this.props.lineCount)
-    const rect = this.props.ref2.current.getBoundingClientRect();
+    const element = this.props.ref2 as React.MutableRefObject<any>;
+    const rect = element.current.getBoundingClientRect();
     // console.log("EV ", event.clientX, event.clientY, rect)
     if (
       event.clientX >= rect.left &&
@@ -199,7 +236,7 @@ class Lines extends React.Component {
     document.addEventListener('keydown', this.handleKeys);
     document.addEventListener('wheel', this.handleWheel);
 
-    this.ensureBuffersLoaded();
+    this.ensureBuffersLoaded(this.props.currentLine);
   }
 
   componentWillUnmount() {
@@ -228,7 +265,7 @@ class Lines extends React.Component {
     return updated;
   }
 
-  componentDidUpdate(prevProps, prevState) {
+  componentDidUpdate(prevProps, _prevState) {
     console.log('didUpdate', this.props.id);
     let selectionChangedInSearch = false;
     if (this.props.id.indexOf('search') === 0) {
@@ -245,7 +282,7 @@ class Lines extends React.Component {
       prevProps.loadLines !== this.props.loadLines
     ) {
       console.log('Source changed, restart', this.props.id);
-      this.setState({ buffer: EMPTY_BUFFER });
+      this.setState({ buffer: EMPTY_BUFFER }); // eslint-disable-line
       if (!selectionChangedInSearch) {
         this.gotoLine(0);
       }
@@ -262,6 +299,9 @@ class Lines extends React.Component {
   }
 
   repositionTheScroll() {
+    if (!this.tableRef.current || !this.tableRef.current.parentElement) {
+      return;
+    }
     const { lines, offset } = this.state.buffer;
 
     const bufferOffset = this.props.currentLine - offset;
@@ -277,7 +317,7 @@ class Lines extends React.Component {
       // if (adjustment > 0) {
       //   debugger;
       // }
-      const rowOffset = rows[bufferOffset - adjustment++].offsetTop;
+      const rowOffset = rows[bufferOffset - adjustment++].offsetTop; // eslint-disable-line
       if (rowOffset === originalScrollTop) {
         break;
       }
@@ -293,7 +333,7 @@ class Lines extends React.Component {
       // debugger;
       this.gotoLine(`-${adjustment - 1}`);
       const lastBlock =
-        this.props.currentLine + lines.length >= this.props.lineCount;
+        this.props.currentLine + lines!.length >= this.props.lineCount;
       if (!lastBlock) {
         console.log(
           'bottom of the buffer, need to move',
@@ -312,7 +352,7 @@ class Lines extends React.Component {
     const scanComplated = this.props.lineCount > 0;
     const bufferNotLoaded = lines === null;
     const isInBuffer = (lineNo) => {
-      return lineNo >= offset && lineNo < offset + lines.length;
+      return lineNo >= offset && lineNo < offset + lines!.length;
     };
 
     // const scrollToBottomOfBuffer = () => {
@@ -362,7 +402,7 @@ class Lines extends React.Component {
     const { showLineNumber, showTimestamp } = options;
 
     return (
-      <div
+      <div // eslint-disable-line
         ref={this.props.ref2}
         onClick={() => {
           window.focused = this.props.id;
@@ -391,5 +431,7 @@ class Lines extends React.Component {
     );
   }
 }
+
+Lines.contextType = FileContext;
 
 export default Lines;

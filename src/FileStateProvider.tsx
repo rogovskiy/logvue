@@ -1,18 +1,55 @@
 import React, { useContext, createContext, useReducer } from 'react';
 
 import { parseLineSpec } from './utils';
+import type {
+  JsonOptionsT,
+  TextOptionsT,
+  LineT,
+  FileEncodingT,
+  ShowTimestampOptionT,
+} from './types';
 
-const DEFAULT_OPTIONS = {
+export type StateT = {
+  file: {
+    path: string | null;
+    fileSize: number | null;
+    currentLine: number;
+    lineCount: number;
+  };
+  filter: {
+    query: string;
+  };
+  activeLine: number | null;
+  filterView: {
+    showBookmarks: boolean;
+    showSearchResults: boolean;
+  };
+  filterResultCount: number;
+  selectedLines: LineT[];
+  options: ViewerOptionsT;
+};
+
+export type ViewerOptionsT = {
+  showLineNumber: boolean;
+  showTimestamp: ShowTimestampOptionT;
+  textFormat: 'json' | 'text';
+  jsonOptions: JsonOptionsT;
+  textOptions: TextOptionsT;
+  encoding: FileEncodingT;
+  bufferSize: number;
+};
+
+const DEFAULT_OPTIONS: ViewerOptionsT = {
   showLineNumber: false,
   showTimestamp: 'short',
   textFormat: 'json',
   jsonOptions: { message: 'message', timestamp: '@timestamp' },
-  textOptions: { timestampPattern: null, extractKeyValue: true },
+  textOptions: { extractKeyValue: true },
   encoding: 'utf8',
   bufferSize: 1000,
 };
 
-const initialState = {
+const initialState: StateT = {
   file: {
     path: null,
     fileSize: null,
@@ -32,10 +69,16 @@ const initialState = {
   options: DEFAULT_OPTIONS,
 };
 
-const FileContext = createContext(initialState);
+const FileContext = createContext<{
+  state: StateT;
+  dispatch: React.Dispatch<any>;
+}>({
+  state: initialState,
+  dispatch: () => null,
+});
 const { Provider } = FileContext;
 
-const reducer = (state, action) => {
+const reducer = (state: StateT, action: any): StateT => {
   console.log('dispatch', action);
   switch (action.type) {
     case 'file-opened':
@@ -46,7 +89,7 @@ const reducer = (state, action) => {
           lineCount: action.lineCount,
         },
       };
-    case 'goto':
+    case 'goto': {
       const lineNo = parseLineSpec(
         action.lineSpec,
         state.file.lineCount,
@@ -63,7 +106,7 @@ const reducer = (state, action) => {
         ...state,
         file: { ...state.file, currentLine: lineNo },
       };
-
+    }
     case 'activate-line':
       return {
         ...state,
@@ -72,7 +115,12 @@ const reducer = (state, action) => {
     case 'file-loaded':
       return {
         ...initialState,
-        file: { path: action.path, fileSize: action.fileSize, currentLine: 0 },
+        file: {
+          path: action.path,
+          fileSize: action.fileSize,
+          currentLine: 0,
+          lineCount: 0,
+        },
       };
     case 'update-options':
       return {
@@ -96,7 +144,7 @@ const reducer = (state, action) => {
         filterView: action.filterView,
       };
     }
-    case 'select-line':
+    case 'select-line': {
       let newSelectedLines;
       if (action.selected) {
         newSelectedLines = state.selectedLines
@@ -111,6 +159,7 @@ const reducer = (state, action) => {
         ...state,
         selectedLines: newSelectedLines,
       };
+    }
     default:
       throw new Error();
   }
@@ -118,7 +167,6 @@ const reducer = (state, action) => {
 
 const FileStateProvider = ({ children }) => {
   const [state, dispatch] = useReducer(reducer, initialState);
-
   return <Provider value={{ state, dispatch }}>{children}</Provider>;
 };
 

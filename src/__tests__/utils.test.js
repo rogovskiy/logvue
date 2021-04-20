@@ -31,7 +31,7 @@ describe('merge search lines and marks', () => {
 
     expect(merged.map((l) => l.lineNo)).toStrictEqual([10, 12, 20]);
   });
-  it('includes only search lines if there are no marker matches', () => {
+  it('includes only search lines if there are no marker matches 2', () => {
     const buffer = searchResult.slice(1, 4);
     const merged = mergeLines(buffer, marks, searchResult.length);
 

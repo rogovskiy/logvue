@@ -5,14 +5,14 @@ import { Input, Button, Icon, Label, Progress } from 'semantic-ui-react';
 import { ipcRenderer } from 'electron';
 import { useFileContext } from './FileStateProvider';
 
-const FilterControls = ({ focused }) => {
+const FilterControls = () => {
   const [filterValue, setFilterValue] = useState('');
   const { dispatch, state: fileState } = useFileContext();
   const { showBookmarks, showSearchResults } = fileState.filterView;
-  const inputRef = useRef();
+  const inputRef = useRef<Input>(null);
 
   const [progress, setProgress] = useState({ progress: 0, count: 0 });
-  const [submitted, setSubmitted] = useState(null);
+  const [submitted, setSubmitted] = useState<string | null>(null);
 
   useEffect(() => {
     setFilterValue('');
@@ -34,16 +34,20 @@ const FilterControls = ({ focused }) => {
     };
   }, [setProgress]);
 
-  useEffect(() => {
-    if (focused > 0) {
-      inputRef.current.focus();
-      inputRef.current.select();
-    }
-  }, [focused, inputRef]);
+  // useEffect(() => {
+  //   if (focused > 0 && inputRef.current !== null) {
+  //     inputRef.current.focus();
+  //     inputRef.current.select();
+  //   }
+  // }, [focused, inputRef]);
 
   useEffect(() => {
     const handleKeys = (e) => {
-      if (e.key === '/' && e.target.nodeName !== 'input') {
+      if (
+        e.key === '/' &&
+        e.target.nodeName !== 'input' &&
+        inputRef.current !== null
+      ) {
         inputRef.current.focus();
         inputRef.current.select();
         e.preventDefault();
@@ -55,6 +59,13 @@ const FilterControls = ({ focused }) => {
     };
   }, [inputRef]);
 
+  const submitFilter = () => {
+    const trimmed = filterValue.trim();
+    setSubmitted(trimmed);
+    setProgress({ progress: 0, count: 0 });
+    dispatch({ type: 'set-filter', filter: { query: trimmed } });
+  };
+
   const handleReturnKey = (e) => {
     if (e.key === 'Enter') {
       submitFilter();
@@ -63,13 +74,6 @@ const FilterControls = ({ focused }) => {
 
   const updateFilterValue = (e) => {
     setFilterValue(e.target.value);
-  };
-
-  const submitFilter = () => {
-    const trimmed = filterValue.trim();
-    setSubmitted(trimmed);
-    setProgress({ progress: 0, count: 0 });
-    dispatch({ type: 'set-filter', filter: { query: trimmed } });
   };
 
   const updateFilterView = (updates) => {

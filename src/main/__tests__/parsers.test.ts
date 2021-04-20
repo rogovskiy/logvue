@@ -1,4 +1,4 @@
-import parsers from '../parsers';
+import * as parsers from '../parsers';
 
 describe('JSON Parsing', () => {
   it('pareses JSON object and remaps _message and _ts', () => {
