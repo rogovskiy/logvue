@@ -86,8 +86,8 @@
     ],
     "publish": {
       "provider": "github",
-      "owner": "LogVue",
-      "repo": "rogovskiy/logvue"
+      "owner": "rogovskiy",
+      "repo": "logvue"
     }
   },
   "repository": {
