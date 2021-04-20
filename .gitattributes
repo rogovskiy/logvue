@@ -11,5 +11,4 @@
 *.woff  binary
 *.woff2 binary
 
-src/main/__test__/*.html binary
 src/main/__test__/*.txt  binary

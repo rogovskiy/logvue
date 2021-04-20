@@ -6,16 +6,16 @@
 [X] Keyboard Scrolling in the area
 [X] Highlight current line
 [X] Display file info in toolbar
-[X] Plain text vs JSON  
+[X] Plain text vs JSON
 [X] Show better timestamp format
 [X] Extract plain text fields key=value
 
 [X] Goto line dialog
-[X] Search 
+[X] Search
 [X] Search progress / Display number of matches
 [X] Marked lines
 
-[ ] Delete large.html test file
+[X] Delete large.html test file
 [ ] Software update / website / blog / twitter / github
 [ ] Getting stuck in the end of the buffer while scrolling // High CPU
 
@@ -30,7 +30,7 @@
 [ ] Settings dialog
 
 1.1
-~ 
+~
 [ ] Create button to sync line in main and filter views
 [ ] Select custom columns
 [ ] Open recent dialog
@@ -47,38 +47,38 @@
 [ ] Validate search regex, highlight red
 
 1.2
-~ 
+~
 [ ] Stacktraces - join , links to code, easily find stacktraces
-[ ] Recent - Predefined filters 
+[ ] Recent - Predefined filters
 [ ] Narrow down the view [ start from line/time | end time/line ]
 [ ] S3 file  (open dialog)
 [ ] S3 folder
 [ ] Highlight rules (json fields) (See Code plugin Log File Highlighteremilast.logfilehighlighter)
 [ ] ASCII colors (ignore or show) :: Text Settings
 
-1.3 
-~ 
+1.3
+~
 [ ] Side by side thread view (could be pro)
 [ ] Open archives
 Detect media types in message (SQL / XML / JSON ) copy in one click or prettify or select
 Spans
-CloudWatch 
-Azure 
+CloudWatch
+Azure
 GCP
 
-~ 
+~
 
-[ ] Change encoding 
+[ ] Change encoding
 [ ] Test performance on slow computer VDI
 [ ] Themes
 
 PRO
 ~ Share highlight and filters
-~ share workspaces 
+~ share workspaces
 ~ embed research to JIRA
 ~ Attach comments to the lines
 ~ DD / Sumo
-~ SSH 
+~ SSH
 ~ PII
 
 Commercial

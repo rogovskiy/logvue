@@ -1,3 +1,5 @@
+import fetch from 'node-fetch';
+import * as fs from 'fs';
 import {
   scanFile,
   openFile,
@@ -9,8 +11,25 @@ import {
 import type { FileOptionsT } from '../file';
 
 const testFilePath = (filename) => {
-  return `${__dirname.replace('/lib', '/src')}/${filename}`;
+  return `${__dirname}/${filename}`;
 };
+
+const downloadFile = async (url, path) => {
+  const res = await fetch(url);
+  const fileStream = fs.createWriteStream(path);
+  await new Promise((resolve, reject) => {
+    res.body.pipe(fileStream);
+    res.body.on('error', reject);
+    fileStream.on('finish', resolve);
+  });
+};
+
+beforeAll(async () => {
+  await downloadFile(
+    'https://raw.githubusercontent.com/logpai/loghub/master/Proxifier/Proxifier_2k.log',
+    testFilePath('Proxifier_2k.log')
+  );
+});
 
 test('scan small file', async () => {
   const lines: string[] = [];
@@ -53,26 +72,42 @@ test.each`
   ${4}
   ${100}
 `('openFile larger file (buffer: $bufferSize KB)', async ({ bufferSize }) => {
-  const result = await openFile(testFilePath('larger_file.html'), 500, {
+  const result = await openFile(testFilePath('Proxifier_2k.log'), 500, {
     encoding: 'utf-8',
     bufferSize: bufferSize * 1024,
   });
-  expect(result.fileStats.lineCount).toBe(5944); // non-empty lines
+  expect(result.fileStats.lineCount).toBe(2000); // non-empty lines
   expect(result.lines.slice(0, 4)).toStrictEqual([
-    { line: '<!DOCTYPE html>', offset: 0, lineNo: 0 },
-    { line: '<html>', offset: 17, lineNo: 1 },
-    { line: '<head>', offset: 25, lineNo: 2 },
     {
       line:
-        '<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />',
-      offset: 37,
+        '[10.30 16:49:06] chrome.exe - proxy.cse.cuhk.edu.hk:5070 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS',
+      offset: 0,
+      lineNo: 0,
+    },
+    {
+      line:
+        '[10.30 16:49:06] chrome.exe - proxy.cse.cuhk.edu.hk:5070 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS',
+      offset: 109,
+      lineNo: 1,
+    },
+    {
+      line:
+        '[10.30 16:49:06] chrome.exe - proxy.cse.cuhk.edu.hk:5070 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS',
+      offset: 218,
+      lineNo: 2,
+    },
+    {
+      line:
+        '[10.30 16:49:07] chrome.exe - proxy.cse.cuhk.edu.hk:5070 close, 0 bytes sent, 0 bytes received, lifetime 00:01',
+      offset: 327,
       lineNo: 3,
     },
   ]);
   expect(result.lines.length).toEqual(500);
   expect(result.lines[499]).toStrictEqual({
-    line: '    <div class="docstring indention">',
-    offset: 23958,
+    line:
+      '[10.30 18:10:27] chrome.exe - proxy.cse.cuhk.edu.hk:5070 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS',
+    offset: 58470,
     lineNo: 499,
   });
 });
@@ -104,14 +139,10 @@ test('loadBuffer small', async () => {
 
 test('loadBuffer larger file without checkpoints', async () => {
   let numberNotifies = 0;
-  // const result = await openFile(__dirname + "/sample.txt", 10, { encoding: "utf-8" }, (p) => {
-  //     // numberNotifies++;
-  //     console.log("progress ", p)
-  // })
 
   const buffer = await loadBuffer(
-    testFilePath('larger_file.html'),
-    5900,
+    testFilePath('Proxifier_2k.log'),
+    1975,
     50,
     [],
     {},
@@ -120,33 +151,45 @@ test('loadBuffer larger file without checkpoints', async () => {
     }
   );
 
-  expect(buffer.lines.length).toBe(44);
+  expect(buffer.lines.length).toBe(25);
   expect(buffer.lines.slice(0, 3)).toStrictEqual([
     {
-      line: '  <span class="lead-duration duration">000ms</span>',
-      offset: 1262105,
-      lineNo: 5900,
+      line:
+        '[07.27 10:22:39] chrome.exe *64 - s1.bdstatic.com:80 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS',
+      offset: 234218,
+      lineNo: 1975,
     },
-    { line: '  </div>', offset: 1262160, lineNo: 5901 },
-    { line: '      </div>', offset: 1262234, lineNo: 5902 },
+    {
+      line:
+        '[07.27 10:22:39] chrome.exe *64 - t12.baidu.com:80 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS',
+      offset: 234323,
+      lineNo: 1976,
+    },
+    {
+      line:
+        '[07.27 10:22:39] chrome.exe *64 - t12.baidu.com:80 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS',
+      offset: 234426,
+      lineNo: 1977,
+    },
   ]);
   expect(buffer.lines[buffer.lines.length - 1]).toStrictEqual({
-    line: '</html>',
-    offset: 1263930,
-    lineNo: 5943,
+    line:
+      '[07.27 10:23:42] chrome.exe *64 - t12.baidu.com:80 close, 0 bytes sent, 0 bytes received, lifetime 00:17',
+    offset: 236858,
+    lineNo: 1999,
   });
-  expect(numberNotifies).toBe(199);
+  expect(numberNotifies).toBe(182);
 });
 
 test('loadBuffer larger file with checkpoints', async () => {
   let numberNotifies = 0;
-  const result = await openFile(testFilePath('larger_file.html'), 10, {
+  const result = await openFile(testFilePath('Proxifier_2k.log'), 10, {
     encoding: 'utf-8',
   });
 
   const buffer = await loadBuffer(
-    testFilePath('larger_file.html'),
-    5900,
+    testFilePath('Proxifier_2k.log'),
+    1975,
     50,
     result.fileStats.checkpoints,
     {},
@@ -156,22 +199,34 @@ test('loadBuffer larger file with checkpoints', async () => {
     }
   );
 
-  expect(buffer.lines.length).toBe(44);
+  expect(buffer.lines.length).toBe(25);
   expect(buffer.lines.slice(0, 3)).toStrictEqual([
     {
-      line: '  <span class="lead-duration duration">000ms</span>',
-      offset: 1262105,
-      lineNo: 5900,
+      line:
+        '[07.27 10:22:39] chrome.exe *64 - s1.bdstatic.com:80 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS',
+      offset: 234218,
+      lineNo: 1975,
     },
-    { line: '  </div>', offset: 1262160, lineNo: 5901 },
-    { line: '      </div>', offset: 1262234, lineNo: 5902 },
+    {
+      line:
+        '[07.27 10:22:39] chrome.exe *64 - t12.baidu.com:80 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS',
+      offset: 234323,
+      lineNo: 1976,
+    },
+    {
+      line:
+        '[07.27 10:22:39] chrome.exe *64 - t12.baidu.com:80 open through proxy proxy.cse.cuhk.edu.hk:5070 HTTPS',
+      offset: 234426,
+      lineNo: 1977,
+    },
   ]);
   expect(buffer.lines[buffer.lines.length - 1]).toStrictEqual({
-    line: '</html>',
-    offset: 1263930,
-    lineNo: 5943,
+    line:
+      '[07.27 10:23:42] chrome.exe *64 - t12.baidu.com:80 close, 0 bytes sent, 0 bytes received, lifetime 00:17',
+    offset: 236858,
+    lineNo: 1999,
   });
-  expect(numberNotifies).toBe(53);
+  expect(numberNotifies).toBe(29);
 });
 
 test('search scan string in a small file', async () => {
