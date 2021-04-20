@@ -3,12 +3,12 @@ name: Test
 on: [push, pull_request]
 
 jobs:
-  release:
+  test:
     runs-on: ${{ matrix.os }}
 
     strategy:
       matrix:
-        os: [macos-latest] # , windows-latest, ubuntu-latest]
+        os: [macos-latest, windows-latest, ubuntu-latest]
 
     steps:
       - name: Check out Git repository
@@ -27,7 +27,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          yarn package
+          yarn build:main 
+          yarn build:renderer 
           yarn lint
           yarn tsc
           yarn test
