@@ -15,36 +15,39 @@
 [X] Search progress / Display number of matches
 [X] Marked lines
 
-[X] Delete large.html test file
-[ ] Software update / website / blog / twitter / github
 [ ] Getting stuck in the end of the buffer while scrolling // High CPU
 
 1.0
-[ ] Scan should return lines (be more responsive)
+[X] Match case in search
 [ ] Cancel search
-[ ] Slow open of a small file (Open dialog seems sluggish)
-[ ] Scrollbar marks
-[ ] Match case in search
-[ ] File drag and drop
-[ ] JSON doesn't show the thread
+[X] Validate search regex, highlight red
+[ ] Scan should return lines (be more responsive)
 [ ] Settings dialog
+[ ] Software update  won't work until certs are purchased
+[ ] Update github pages (screenshot and list of features)
+[ ] Create twitter
+[ ] Select custom columns
+[ ] JSON doesn't show the thread
+[ ] Guess optimal settings when openning a file (json/ text / json fields / encoding may be)
+[ ] Change timezone
+[ ] Display timezone in the file info
 
 1.1
 ~
-[ ] Create button to sync line in main and filter views
-[ ] Select custom columns
+[ ] Histogram panel (display line counts , matches)
+[ ] Concepts of "thread" and "span" may be highlighting based on that. A button displaying known threads (scan to find all). Assign colors to threads (affects timestamp display color and histogram)
+[ ] Filter threads
 [ ] Open recent dialog
+[ ] File drag and drop
 [ ] File buffer 5000 and scroll buffer 200 (file buffer reduces file IO / scroll buffer for smooth scrolling)
+[ ] Scrollbar marks
 [ ] Dyanmic scroll bar handle size / hide scrollbar if not necesasry
 [ ] Keyboard navigation / hints (like on Semantic UI site)
 [ ] Save settings
 [ ] Go to timestamp
+[ ] Create button to find the active line in the filter view
 [?] Wrap long lines
 [ ] Seach custom fields
-[ ] Guess optimal settings when openning a file (json/ text / json fields / encoding may be)
-[ ] Change timezone
-[ ] Display timezone in the file info
-[ ] Validate search regex, highlight red
 
 1.2
 ~

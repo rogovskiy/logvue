@@ -10,18 +10,19 @@ type MainLinesProps = {
 
 const MainLines = React.forwardRef<any, MainLinesProps>(({ height }, ref) => {
   const { state: fileState, dispatch } = useFileContext();
-  const { options, file } = fileState;
+  const { parserOptions, file } = fileState;
 
   const loadLines = useCallback(
     async (start, bufferSize) => {
-      return ipcRenderer.invoke('load-buffer', file.path, start, bufferSize, {
-        textFormat: options.textFormat,
-        jsonOptions: options.jsonOptions,
-        textOptions: options.textOptions,
-        encoding: options.encoding,
-      }); // { lines, offset }
+      return ipcRenderer.invoke(
+        'load-buffer',
+        file.path,
+        start,
+        bufferSize,
+        parserOptions
+      ); // { lines, offset }
     },
-    [file.path, options]
+    [file.path, parserOptions]
   );
   const gotoLine = useCallback(
     (lineSpec) => {

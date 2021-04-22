@@ -4,6 +4,7 @@ import { Progress, Icon, Menu } from 'semantic-ui-react';
 import { ipcRenderer } from 'electron';
 import { useFileContext } from './FileStateProvider';
 import GoToLineModal from './GoToLineModal';
+import SettingsModal from './SettingsModal';
 
 const timestampFormats = ['none', 'short', 'full'];
 
@@ -17,9 +18,10 @@ const fileSizeSI = (size: number) => {
 const MyMenu = () => {
   const [progress, setProgress] = useState(0);
   const [gotoShown, setGoToShown] = useState(false);
+  const [settingsShown, setSettingsShown] = useState(false);
 
   const { state: fileState, dispatch } = useFileContext();
-  const { file, options } = fileState;
+  const { file, viewOptions, parserOptions } = fileState;
   const fileSelected = file.path !== null;
 
   const chooseFile = useCallback(async () => {
@@ -73,20 +75,30 @@ const MyMenu = () => {
     };
   }, [setProgress]);
 
-  const updateOptions = (updates) => {
-    dispatch({ type: 'update-options', updates });
+  const updateViewOptions = (updates) => {
+    dispatch({ type: 'update-view-options', updates });
+  };
+
+  const updateParserOptions = (updates) => {
+    dispatch({ type: 'update-parser-options', updates });
   };
 
   const nextTimestampFormat = () => {
-    const current = timestampFormats.indexOf(options.showTimestamp);
-    updateOptions({
+    const current = timestampFormats.indexOf(viewOptions.showTimestamp);
+    updateViewOptions({
       showTimestamp: timestampFormats[(current + 1) % timestampFormats.length],
     });
+  };
+
+  const handleSettings = (newSettings) => {
+    dispatch({ action: 'update-settings', newSettings });
+    setSettingsShown(false);
   };
 
   return (
     <div>
       <GoToLineModal show={gotoShown} onClose={handleGoToLine} />
+      <SettingsModal show={settingsShown} onClose={handleSettings} />
       <Menu style={{ marginBottom: 0 }}>
         <Menu.Item onClick={chooseFile}>
           <Icon name="folder open outline" /> Open
@@ -95,14 +107,14 @@ const MyMenu = () => {
           <Menu.Item style={{ padding: '5px' }}>
             <Menu compact className="mini">
               <Menu.Item
-                active={options.textFormat !== 'json'}
-                onClick={() => updateOptions({ textFormat: 'text' })}
+                active={parserOptions.textFormat !== 'json'}
+                onClick={() => updateParserOptions({ textFormat: 'text' })}
               >
                 <Icon name="file alternate outline" /> Text
               </Menu.Item>
               <Menu.Item
-                active={options.textFormat === 'json'}
-                onClick={() => updateOptions({ textFormat: 'json' })}
+                active={parserOptions.textFormat === 'json'}
+                onClick={() => updateParserOptions({ textFormat: 'json' })}
               >
                 <Icon name="code" />
                 JSON
@@ -112,20 +124,31 @@ const MyMenu = () => {
             <Menu compact className="mini">
               <Menu.Item
                 title="Show line numbers"
-                active={options.showLineNumber}
+                active={viewOptions.showLineNumber}
                 onClick={() =>
-                  updateOptions({ showLineNumber: !options.showLineNumber })
+                  updateViewOptions({
+                    showLineNumber: !viewOptions.showLineNumber,
+                  })
                 }
               >
                 <Icon name="list ol" />
               </Menu.Item>
               <Menu.Item
                 title="Show timestamps"
-                active={options.showTimestamp !== 'none'}
+                active={viewOptions.showTimestamp !== 'none'}
                 onClick={nextTimestampFormat}
               >
                 <Icon name="clock outline" />
               </Menu.Item>
+              {/* <Menu.Item
+                title="Show histogram"
+                active={options.showHistogram}
+                onClick={() =>
+                  updateViewOptions({ showHistogram: !options.showHistogram })
+                }
+              >
+                <Icon name="chart bar" />
+              </Menu.Item> */}
             </Menu>
           </Menu.Item>
         )}
@@ -141,7 +164,7 @@ const MyMenu = () => {
               {fileSizeSI(file.fileSize || 0)}
             </Menu.Item>
           )}
-          <Menu.Item>
+          <Menu.Item onClick={() => setSettingsShown(true)}>
             <Icon name="cog" /> Settings
           </Menu.Item>
         </Menu.Menu>

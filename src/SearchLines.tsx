@@ -21,7 +21,13 @@ type CacheT = {
 const SearchLines = React.forwardRef<any, SearchLinesProps>(
   ({ height }, ref) => {
     const { state: fileState, dispatch } = useFileContext();
-    const { options, file, filter, filterView, selectedLines } = fileState;
+    const {
+      parserOptions,
+      file,
+      filter,
+      filterView,
+      selectedLines,
+    } = fileState;
     const [searchLine, setSearchLine] = useState(0);
     const [cache, setCache] = useState<CacheT | null>(null);
 
@@ -44,12 +50,7 @@ const SearchLines = React.forwardRef<any, SearchLinesProps>(
           'search-scan',
           file.path,
           filter,
-          {
-            textFormat: options.textFormat,
-            jsonOptions: options.jsonOptions,
-            textOptions: options.textOptions,
-            encoding: options.encoding,
-          }
+          parserOptions
         ); // { resultCount }
         dispatch({
           type: 'search-scan',
@@ -57,16 +58,7 @@ const SearchLines = React.forwardRef<any, SearchLinesProps>(
         });
       };
       scan();
-    }, [
-      file.path,
-      filter,
-      options.textFormat,
-      options.jsonOptions,
-      options.encoding,
-      options.textOptions,
-      dispatch,
-      filterView.showBookmarks,
-    ]);
+    }, [file.path, filter, parserOptions, dispatch, filterView.showBookmarks]);
 
     const loadLines = useCallback(
       async (start, bufferSize) => {
@@ -105,12 +97,7 @@ const SearchLines = React.forwardRef<any, SearchLinesProps>(
             filter,
             start - extraLine,
             expectedBufferSize,
-            {
-              textFormat: options.textFormat,
-              jsonOptions: options.jsonOptions,
-              textOptions: options.textOptions,
-              encoding: options.encoding,
-            }
+            parserOptions
           );
           lines = loadedLines;
           setCache({
@@ -140,7 +127,7 @@ const SearchLines = React.forwardRef<any, SearchLinesProps>(
         filterView,
         selectedLines,
         fileState.filterResultCount,
-        options,
+        parserOptions,
         cache,
         setCache,
       ]
@@ -159,10 +146,12 @@ const SearchLines = React.forwardRef<any, SearchLinesProps>(
     );
 
     // useCallback is necessary on all passed in functions to prevent re-rendering <Lines> without need
+    const filterQueryId = `${filter.query}-${filter.matchCase}`;
+    const filterViewId = `${filterView.showBookmarks}-${filterView.showSearchResults}`;
     return (
       <Lines
         ref2={ref}
-        id={`search:${filter.query}-${filterView.showBookmarks}-${filterView.showSearchResults}-${selectedLines.length}`}
+        id={`search:${filterQueryId}-${filterViewId}-${selectedLines.length}`}
         height={height}
         loadLines={loadLines}
         currentLine={searchLine}

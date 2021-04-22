@@ -1,10 +1,12 @@
 import fs from 'fs';
 import { parseJson, parsePlainText } from './parsers';
+import { createLineMatcher } from './search';
 import type {
   LineT,
   FileEncodingT,
   JsonOptionsT,
   TextOptionsT,
+  FilterT,
 } from '../types';
 
 export type FileOptionsT = {
@@ -35,7 +37,6 @@ type LineCallbackFn = (
   offsetNumber: number,
   options?: LineOptionsT
 ) => boolean;
-type SearchT = { query: string };
 // type FileInfoT = { // eslint-disable-line
 //   fileStats: { checkpoints: Array<CheckpointT> };
 //   searchCheckpoints: Map<string, CheckpointT>;
@@ -335,14 +336,10 @@ export const loadBuffer = async (
   return { lines, offset: start };
 };
 
-const matchesSearch = (line: LineT, search: SearchT): boolean => {
-  return line.line.match(search.query) != null;
-};
-
 // returns a buffer of lines starting the given line number
 export const searchBuffer = async (
   filename: string,
-  search: SearchT,
+  search: FilterT,
   startLineNo: number,
   lineBufferSize: number,
   checkpoints: SearchCheckpointT[],
@@ -366,6 +363,7 @@ export const searchBuffer = async (
   let lastUpdate = 0;
   const updateFrequency = lineBufferSize / 200;
   let toBeSkipped = startLineNo - startingCheckpoint.searchLineNo;
+  const lineMatcher = createLineMatcher(search);
 
   await scanFile(
     filename,
@@ -382,7 +380,7 @@ export const searchBuffer = async (
       if (lineParser) {
         lineObject = lineParser(lineObject);
       }
-      if (!matchesSearch(lineObject, search)) {
+      if (!lineMatcher(lineObject)) {
         return true;
       }
       if (toBeSkipped > 0) {
@@ -414,7 +412,7 @@ export const searchBuffer = async (
 // returns a buffer of lines starting the given line number
 export const searchScan = async (
   filename: string,
-  search: SearchT,
+  search: FilterT,
   options: FileOptionsT,
   progressCallback: ProgressCallbackFn
 ): Promise<{ resultsCount: number; checkpoints: SearchCheckpointT[] }> => {
@@ -434,6 +432,7 @@ export const searchScan = async (
     resultsCount: 0,
     checkpoints: [],
   };
+  const lineMatcher = createLineMatcher(search);
 
   await scanFile(
     filename,
@@ -457,7 +456,7 @@ export const searchScan = async (
       if (lineParser) {
         lineObject = lineParser(lineObject);
       }
-      if (!matchesSearch(lineObject, search)) {
+      if (!lineMatcher(lineObject)) {
         return true;
       }
       result.resultsCount += 1;

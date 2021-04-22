@@ -381,7 +381,7 @@ class Lines extends React.Component<LinesProps, LinesState> {
   };
 
   throttledLoadBuffer = throttle(async (lineNo, overlap) => {
-    const { bufferSize } = this.context.state.options;
+    const { bufferSize } = this.context.state.parserOptions;
     const start = Math.max(0, lineNo - bufferSize * overlap);
     console.log(`Loading buffer from ${start}`);
     const results = await this.props.loadLines(start, bufferSize);
@@ -398,8 +398,8 @@ class Lines extends React.Component<LinesProps, LinesState> {
       this.props.currentLine
     );
     const { lines } = this.state.buffer;
-    const { options } = this.context.state;
-    const { showLineNumber, showTimestamp } = options;
+    const { viewOptions } = this.context.state;
+    const { showLineNumber, showTimestamp } = viewOptions;
 
     return (
       <div // eslint-disable-line

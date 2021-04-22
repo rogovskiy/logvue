@@ -232,7 +232,7 @@ test('loadBuffer larger file with checkpoints', async () => {
 test('search scan string in a small file', async () => {
   const { resultsCount } = await searchScan(
     testFilePath('sample.txt'),
-    { query: 'tw' },
+    { query: 'tw', matchCase: true },
     { encoding: 'utf-8' },
     () => {}
   );
@@ -240,7 +240,7 @@ test('search scan string in a small file', async () => {
 
   const { resultsCount: resultsCount2 } = await searchScan(
     testFilePath('sample.txt'),
-    { query: 't' },
+    { query: 't', matchCase: true },
     { encoding: 'utf-8' },
     () => {}
   );
@@ -250,7 +250,7 @@ test('search scan string in a small file', async () => {
 test('search string in a small file using start line', async () => {
   const { lines } = await searchBuffer(
     testFilePath('sample.txt'),
-    { query: 'tw' },
+    { query: 'tw', matchCase: true },
     2,
     1000,
     [],
@@ -264,7 +264,7 @@ test('buffered search', async () => {
   // for i in {0..1000}; do echo aaa $i; echo bbb $i; echo ccc $i;  done > src/__tests__/search_test.txt
   const testFile = testFilePath('search_test.txt');
   const options: FileOptionsT = { encoding: 'utf8', bufferSize: 100 };
-  const searchQuery = { query: 'aaa' };
+  const searchQuery = { query: 'aaa', matchCase: true };
 
   await openFile(testFile, 10, options);
   // console.log("file open", result);

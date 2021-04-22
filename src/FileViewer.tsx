@@ -12,7 +12,7 @@ import { useFileContext } from './FileStateProvider';
 
 const FileViewer = () => {
   const { state: fileState, dispatch } = useFileContext();
-  const { file, options } = fileState;
+  const { file, parserOptions } = fileState;
 
   const [heights, setHeights] = useState<{
     resizer: string;
@@ -34,15 +34,15 @@ const FileViewer = () => {
       const newBuffer = await ipcRenderer.invoke(
         'open-file',
         file.path,
-        options.bufferSize,
+        parserOptions.bufferSize,
         {
-          encoding: options.encoding,
+          encoding: parserOptions.encoding,
         }
       );
       dispatch({ type: 'file-opened', lineCount: newBuffer.lineCount });
     };
     scanFile();
-  }, [file.path, dispatch, options.encoding, options.bufferSize]);
+  }, [file.path, dispatch, parserOptions]);
 
   const updateHeights = useCallback(
     (optionalResizer) => {

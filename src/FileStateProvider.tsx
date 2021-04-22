@@ -7,6 +7,7 @@ import type {
   LineT,
   FileEncodingT,
   ShowTimestampOptionT,
+  FilterT,
 } from './types';
 
 export type StateT = {
@@ -16,9 +17,7 @@ export type StateT = {
     currentLine: number;
     lineCount: number;
   };
-  filter: {
-    query: string;
-  };
+  filter: FilterT;
   activeLine: number | null;
   filterView: {
     showBookmarks: boolean;
@@ -26,12 +25,17 @@ export type StateT = {
   };
   filterResultCount: number;
   selectedLines: LineT[];
-  options: ViewerOptionsT;
+  viewOptions: ViewerOptionsT;
+  parserOptions: ParserOptionsT;
 };
 
 export type ViewerOptionsT = {
   showLineNumber: boolean;
   showTimestamp: ShowTimestampOptionT;
+  showHistogram: boolean;
+};
+
+export type ParserOptionsT = {
   textFormat: 'json' | 'text';
   jsonOptions: JsonOptionsT;
   textOptions: TextOptionsT;
@@ -39,13 +43,17 @@ export type ViewerOptionsT = {
   bufferSize: number;
 };
 
-const DEFAULT_OPTIONS: ViewerOptionsT = {
+const DEFAULT_VIEW_OPTIONS: ViewerOptionsT = {
   showLineNumber: false,
   showTimestamp: 'short',
+  showHistogram: true,
+};
+
+const DEFAULT_PARSER_OPTIONS: ParserOptionsT = {
   textFormat: 'json',
   jsonOptions: { message: 'message', timestamp: '@timestamp' },
-  textOptions: { extractKeyValue: true },
-  encoding: 'utf8',
+  textOptions: { extractKeyValue: true, timestampPattern: '^(.{25})' },
+  encoding: 'utf-8',
   bufferSize: 1000,
 };
 
@@ -58,6 +66,7 @@ const initialState: StateT = {
   },
   filter: {
     query: '',
+    matchCase: false,
   },
   activeLine: null,
   filterView: {
@@ -66,7 +75,8 @@ const initialState: StateT = {
   },
   filterResultCount: 0,
   selectedLines: [],
-  options: DEFAULT_OPTIONS,
+  viewOptions: DEFAULT_VIEW_OPTIONS,
+  parserOptions: DEFAULT_PARSER_OPTIONS,
 };
 
 const FileContext = createContext<{
@@ -122,10 +132,15 @@ const reducer = (state: StateT, action: any): StateT => {
           lineCount: 0,
         },
       };
-    case 'update-options':
+    case 'update-view-options':
       return {
         ...state,
-        options: { ...state.options, ...action.updates },
+        viewOptions: { ...state.viewOptions, ...action.updates },
+      };
+    case 'update-parser-options':
+      return {
+        ...state,
+        parserOptions: { ...state.parserOptions, ...action.updates },
       };
     case 'set-filter':
       return {
