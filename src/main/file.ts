@@ -216,7 +216,7 @@ export const openFile = async (
   await scanFile(
     filename,
     null,
-    encoding || 'utf8',
+    encoding || 'utf-8',
     bufferSize || DEFAULT_BUFFER,
     (line, lineNo, offset, _options) => {
       if (lines.length < lineBufferSize) {
@@ -305,7 +305,7 @@ export const loadBuffer = async (
   await scanFile(
     filename,
     startingCheckpoint,
-    encoding || 'utf8',
+    encoding || 'utf-8',
     bufferSize || DEFAULT_BUFFER,
     (line, lineNo, offset, _options) => {
       if (lineNo >= start) {
@@ -368,7 +368,7 @@ export const searchBuffer = async (
   await scanFile(
     filename,
     startingCheckpoint,
-    encoding || 'utf8',
+    encoding || 'utf-8',
     bufferSize || DEFAULT_BUFFER,
     (line, lineNo, offset, _options) => {
       let lineObject = {
@@ -437,7 +437,7 @@ export const searchScan = async (
   await scanFile(
     filename,
     null,
-    encoding || 'utf8',
+    encoding || 'utf-8',
     bufferSize || DEFAULT_BUFFER,
     (line, lineNo, offset, _options) => {
       if (progressCallback && offset - lastUpdate > updateFrequency) {

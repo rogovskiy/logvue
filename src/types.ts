@@ -10,7 +10,7 @@ export type TextOptionsT = {
   extractKeyValue?: boolean;
   timestampPattern?: string;
 };
-export type FileEncodingT = 'utf-8' | 'iso-8859-1';
+export type FileEncodingT = 'utf-8' | 'latin1';
 export type ShowTimestampOptionT = 'short' | 'long' | 'none';
 
 export type FilterT = {

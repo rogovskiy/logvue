@@ -24,7 +24,7 @@
 [ ] Scan should return lines (be more responsive)
 [ ] Settings dialog
 [ ] Software update  won't work until certs are purchased
-[ ] Update github pages (screenshot and list of features)
+[X] Update github pages (screenshot and list of features)
 [ ] Create twitter
 [ ] Select custom columns
 [ ] JSON doesn't show the thread

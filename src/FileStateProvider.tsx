@@ -94,6 +94,8 @@ const reducer = (state: StateT, action: any): StateT => {
     case 'file-opened':
       return {
         ...initialState,
+        parserOptions: state.parserOptions,
+        viewOptions: state.viewOptions,
         file: {
           ...state.file,
           lineCount: action.lineCount,
@@ -138,6 +140,10 @@ const reducer = (state: StateT, action: any): StateT => {
         viewOptions: { ...state.viewOptions, ...action.updates },
       };
     case 'update-parser-options':
+      console.log('NEEW', {
+        ...state,
+        parserOptions: { ...state.parserOptions, ...action.updates },
+      });
       return {
         ...state,
         parserOptions: { ...state.parserOptions, ...action.updates },

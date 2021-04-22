@@ -91,7 +91,9 @@ const MyMenu = () => {
   };
 
   const handleSettings = (newSettings) => {
-    dispatch({ action: 'update-settings', newSettings });
+    if (newSettings) {
+      dispatch({ type: 'update-parser-options', updates: newSettings });
+    }
     setSettingsShown(false);
   };
 

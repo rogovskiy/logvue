@@ -96,7 +96,6 @@ const FilterControls = () => {
     margin: '0',
   };
 
-
   const validRegex = validateRegex(filterValue.query);
 
   const inputStyle: React.CSSProperties = {

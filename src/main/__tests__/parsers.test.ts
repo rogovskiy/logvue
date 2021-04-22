@@ -89,7 +89,7 @@ describe('Text Parsing', () => {
       line: '2021-03-18T03:59:52.017Z Hello world time=12sec cpu=21',
     };
     const parsed = parsers.parsePlainText(lineObject, {
-      timestampPattern: /^.{24}/,
+      timestampPattern: '^.{24}',
       extractKeyValue: true,
     });
     expect(parsed._message).toBe('Hello world time=12sec cpu=21');

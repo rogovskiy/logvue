@@ -263,7 +263,7 @@ test('search string in a small file using start line', async () => {
 test('buffered search', async () => {
   // for i in {0..1000}; do echo aaa $i; echo bbb $i; echo ccc $i;  done > src/__tests__/search_test.txt
   const testFile = testFilePath('search_test.txt');
-  const options: FileOptionsT = { encoding: 'utf8', bufferSize: 100 };
+  const options: FileOptionsT = { encoding: 'utf-8', bufferSize: 100 };
   const searchQuery = { query: 'aaa', matchCase: true };
 
   await openFile(testFile, 10, options);
