@@ -6,8 +6,8 @@ LogVue can open large log files without crashing. It allows efficient searching 
 
 <div align="center">
 
-[![Build Status][github-actions-status]][github-actions-url]
-[![Github Tag][github-tag-image]][github-tag-url]
+![GitHub Workflow Status](https://img.shields.io/github/workflow/status/rogovskiy/logvue/Test)
+![GitHub release (latest by date)](https://img.shields.io/github/v/release/rogovskiy/logvue)
 </div>
 
 <img src=".erb/img/screenshot.png" alt="screenshot" />
