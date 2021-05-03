@@ -25,7 +25,7 @@ const DateFormatPopup = () => {
             <thead>
               <tr>
                 <th>Token</th>
-                <th width="100%">Description</th>
+                <th style={{ width: '100%' }}>Description</th>
                 <th>Example</th>
               </tr>
             </thead>
