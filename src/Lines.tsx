@@ -72,7 +72,7 @@ const LineBuffer: FunctionComponent<LineBufferProps> = React.memo(
     if (lines) {
       lines.forEach((l) => {
         if (activeLine === l.lineNo) {
-          console.log("ACTIVE ", l);
+          console.log('ACTIVE ', l);
         }
       });
     }

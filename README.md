@@ -17,3 +17,4 @@ LogVue can open large log files without crashing. It allows efficient searching 
 * Filtering 
 * Marking lines 
 * Keyboard navigation
+* Charting

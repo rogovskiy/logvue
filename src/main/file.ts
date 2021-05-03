@@ -257,7 +257,8 @@ const createLineParser = (options) => {
   } else {
     const to = options.textOptions;
     if (to != null) {
-      lineParser = (lineObject) => parsePlainText(lineObject, to, options.dateFormat);
+      lineParser = (lineObject) =>
+        parsePlainText(lineObject, to, options.dateFormat);
     }
   }
   return lineParser;

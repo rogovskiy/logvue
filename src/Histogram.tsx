@@ -20,6 +20,20 @@ const toJSDate = (dt: DateTime) => {
   return new DateTime(dt).set({ millisecond: 0 }).toJSDate();
 };
 
+const CustomTooltip = ({ datum }) => {
+  if (datum) {
+    return (
+      <div>
+        <div>
+          <b>{datum.primary.toISOString().substring(11, 19)}</b>
+        </div>
+        <div>Lines: {Math.round(datum.secondary).toLocaleString()}</div>
+      </div>
+    );
+  }
+  return null;
+};
+
 const Histogram: FunctionComponent<HistogramProps> = ({
   height,
   path,
@@ -85,6 +99,14 @@ const Histogram: FunctionComponent<HistogramProps> = ({
       { type: 'linear', position: 'left', show: false, showGrid: false },
     ];
   }, [histogramData]);
+  const tooltip = React.useMemo(
+    () => ({
+      render: ({ datum, primaryAxis, getStyle }) => {
+        return <CustomTooltip {...{ getStyle, primaryAxis, datum }} />;
+      },
+    }),
+    []
+  );
   if (histogramData === null) {
     return <div />; // loading
   }
@@ -103,7 +125,13 @@ const Histogram: FunctionComponent<HistogramProps> = ({
     );
   }
   return (
-    <Chart style={{ height }} data={data} series={series} axes={axes} tooltip />
+    <Chart
+      style={{ height }}
+      data={data}
+      series={series}
+      axes={axes}
+      tooltip={tooltip}
+    />
   );
 };
 
