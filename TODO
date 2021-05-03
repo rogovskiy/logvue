@@ -19,9 +19,9 @@
 
 1.0
 [X] Match case in search
-[ ] Histogram panel (display line counts , matches)
-[ ] Cancel search
+[X] Cancel search
 [X] Validate search regex, highlight red
+[ ] Histogram panel display matches
 [ ] Scan should return lines (be more responsive)
 [X] Settings dialog
 [ ] Software update  won't work until certs are purchased

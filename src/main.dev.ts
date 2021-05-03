@@ -186,6 +186,7 @@ ipcMain.handle(
   async (event, filename, lineBufferSize, options) => {
     const throttledProgress = throttle((p) => {
       event.sender.send('progress', p);
+      return false;
     }, 200);
     const results = await openFile(
       filename,
@@ -219,6 +220,7 @@ ipcMain.handle(
   async (event, filename, start, lineBufferSize, options) => {
     const throttledProgress = throttle((p) => {
       event.sender.send(`progress-${filename}`, p);
+      return false;
     }, 200);
     if (start !== 0 && !fileInfo[filename]) {
       throw new Error(
@@ -242,10 +244,17 @@ ipcMain.handle(
 ipcMain.handle('search-scan', async (event, filename, filter, options) => {
   const throttledProgress = throttle((p, c) => {
     event.sender.send('search-progress', p, c);
+    return fileInfo[filename].cancelSearch;
   }, 200);
+  fileInfo[filename].cancelSearch = false;
   const result = await searchScan(filename, filter, options, throttledProgress); // { resultsCount: 0, checkpoints: [] };
   fileInfo[filename].searchCheckpoints[filter.query] = result.checkpoints;
   return { resultCount: result.resultsCount };
+});
+
+ipcMain.handle('cancel-search', async (_event, filename) => {
+  fileInfo[filename].cancelSearch = true;
+  console.log('CANCELED');
 });
 
 ipcMain.handle(
@@ -253,6 +262,7 @@ ipcMain.handle(
   async (event, filename, filter, startLine, lineBufferSize, options) => {
     const throttledProgress = throttle((p) => {
       event.sender.send('search-progress', p);
+      return false;
     }, 200);
     if (startLine !== 0 && !fileInfo[filename]) {
       throw new Error(

@@ -31,6 +31,7 @@ beforeAll(async () => {
     'https://raw.githubusercontent.com/logpai/loghub/master/Proxifier/Proxifier_2k.log',
     testFilePath('Proxifier_2k.log')
   );
+  console.log('Downloaded test file Proxifier_2k.log');
 });
 
 test('scan small file', async () => {
@@ -56,6 +57,7 @@ test('openFile small file', async () => {
     DEFAULT_PARSER_OPTIONS,
     () => {
       numberNotifies += 1;
+      return false;
     }
   );
   expect(result.fileStats.lineCount).toBe(4);
@@ -128,6 +130,7 @@ test('loadBuffer small', async () => {
     DEFAULT_PARSER_OPTIONS,
     () => {
       numberNotifies += 1;
+      return false;
     }
   );
 
@@ -150,6 +153,7 @@ test('loadBuffer larger file without checkpoints', async () => {
     DEFAULT_PARSER_OPTIONS,
     () => {
       numberNotifies += 1;
+      return false;
     }
   );
 
@@ -200,6 +204,7 @@ test('loadBuffer larger file with checkpoints', async () => {
     () => {
       // TODO add checkpoints
       numberNotifies += 1;
+      return false;
     }
   );
 
@@ -238,7 +243,7 @@ test('search scan string in a small file', async () => {
     testFilePath('sample.txt'),
     { query: 'tw', matchCase: true },
     DEFAULT_PARSER_OPTIONS,
-    () => {}
+    () => false
   );
   expect(resultsCount).toBe(1);
 
@@ -246,7 +251,7 @@ test('search scan string in a small file', async () => {
     testFilePath('sample.txt'),
     { query: 't', matchCase: true },
     DEFAULT_PARSER_OPTIONS,
-    () => {}
+    () => false
   );
   expect(resultsCount2).toBe(2);
 });
@@ -259,7 +264,7 @@ test('search string in a small file using start line', async () => {
     1000,
     [],
     DEFAULT_PARSER_OPTIONS,
-    () => {}
+    () => false
   );
   expect(lines).toStrictEqual([]);
 });
@@ -280,7 +285,7 @@ test('buffered search', async () => {
     testFile,
     searchQuery,
     options,
-    () => {}
+    () => false
   );
   // console.log("search scan", searchResult);
 
@@ -293,7 +298,7 @@ test('buffered search', async () => {
     100,
     searchResult.checkpoints,
     options,
-    () => {}
+    () => false
   );
   // console.log("buffer", buffer);
   expect(buffer.lines.length).toBe(100);
@@ -317,7 +322,7 @@ test('buffered search', async () => {
     10,
     searchResult.checkpoints,
     options,
-    () => {}
+    () => false
   );
   // console.log("buffer2", buffer2);
   expect(buffer2.lines.length).toBe(10);
@@ -341,7 +346,7 @@ test('buffered search', async () => {
     10,
     [],
     options,
-    () => {}
+    () => false
   );
   // console.log("buffer3", buffer3);
   expect(buffer3.lines.length).toBe(10);

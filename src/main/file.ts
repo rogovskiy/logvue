@@ -37,7 +37,7 @@ type HistogramPointT = {
   value: number;
 };
 
-type ProgressCallbackFn = (progress: number, count: number) => void;
+type ProgressCallbackFn = (progress: number, count: number) => boolean;
 type LineCallbackFn = (
   line: string,
   lineNo: number,
@@ -448,8 +448,14 @@ export const searchScan = async (
     bufferSize || DEFAULT_BUFFER,
     (line, lineNo, offset, _options) => {
       if (progressCallback && offset - lastUpdate > updateFrequency) {
-        progressCallback((100 * offset) / totalLength, result.resultsCount);
+        const cancelled: boolean = progressCallback(
+          (100 * offset) / totalLength,
+          result.resultsCount
+        );
         lastUpdate = offset;
+        if (cancelled) {
+          return false;
+        }
       }
       if (offset - lastCheckpointUpdate > checkpointFrequency) {
         result.checkpoints.push({

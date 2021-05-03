@@ -18,11 +18,13 @@ const FilterControls = () => {
 
   const [progress, setProgress] = useState({ progress: 0, count: 0 });
   const [submitted, setSubmitted] = useState<string | null>(null);
+  const [cacneling, setCanceling] = useState(false);
 
   useEffect(() => {
     setFilterValue({ query: '', matchCase: false });
     setProgress({ progress: 0, count: 0 });
     setSubmitted(null);
+    setCanceling(false);
   }, [fileState.file.path, setSubmitted, setProgress, setFilterValue]);
 
   useEffect(() => {
@@ -68,7 +70,13 @@ const FilterControls = () => {
     const trimmed = filterValue.query.trim();
     setSubmitted(trimmed);
     setProgress({ progress: 0, count: 0 });
+    setCanceling(false);
     dispatch({ type: 'set-filter', filter: filterValue });
+  };
+
+  const cancelSearch = () => {
+    ipcRenderer.invoke('cancel-search', fileState.file.path);
+    setCanceling(true);
   };
 
   const handleReturnKey = (e) => {
@@ -105,6 +113,7 @@ const FilterControls = () => {
   if (!validRegex.valid) {
     inputStyle.color = 'red';
   }
+  const isSearching = progress.progress > 0;
 
   return (
     <div>
@@ -116,7 +125,6 @@ const FilterControls = () => {
         onChange={updateFilterValue}
         onKeyDown={handleReturnKey}
         labelPosition="right"
-        disabled={progress.progress > 0}
       >
         <Button.Group>
           <Button
@@ -127,6 +135,7 @@ const FilterControls = () => {
             active={showSearchResults}
             style={{ borderBottomLeftRadius: '0', borderTopLeftRadius: '0' }}
             title="Show search results"
+            disabled={isSearching}
           >
             <Icon name="search" size="small" />
           </Button>
@@ -136,6 +145,7 @@ const FilterControls = () => {
             active={showBookmarks}
             style={{ borderBottomRightRadius: '0', borderTopRightRadius: '0' }}
             title="Show marked lines"
+            disabled={isSearching}
           >
             <Icon name="bookmark" size="small" />
           </Button>
@@ -150,6 +160,7 @@ const FilterControls = () => {
             active={filterValue.matchCase}
             style={notRounded}
             title="Match case"
+            disabled={isSearching}
           >
             <span style={{ fontSize: '0.8em' }}>Aa</span>
           </Button>
@@ -157,11 +168,26 @@ const FilterControls = () => {
         <input
           style={inputStyle}
           title={validRegex.valid ? '' : validRegex.error}
+          disabled={isSearching}
         />
         {submitted && <Label basic>{progress.count} matches</Label>}
-        <Button onClick={submitFilter} style={notRounded}>
-          Filter
-        </Button>
+        {!isSearching && (
+          <Button onClick={submitFilter} style={notRounded}>
+            Filter
+          </Button>
+        )}
+        {isSearching && (
+          <Button
+            onClick={cancelSearch}
+            style={notRounded}
+            icon
+            disabled={cacneling}
+            loading={cacneling}
+          >
+            <Icon name={cacneling ? 'circle notch' : 'stop circle outline'} />
+            Cancel
+          </Button>
+        )}
       </Input>
       {progress.progress > 0 && (
         <Progress percent={progress.progress} attached="bottom" />
