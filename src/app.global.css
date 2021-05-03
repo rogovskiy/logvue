@@ -76,3 +76,5 @@ code {
 tr.selected td {
   background-color: #daedf4 !important;
 }
+
+.tooltip-wrap { z-index: 99;}

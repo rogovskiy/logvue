@@ -238,11 +238,14 @@
     "yarn-deduplicate": "^3.1.0"
   },
   "dependencies": {
+    "@types/luxon": "^1.26.5",
     "electron-debug": "^3.1.0",
     "electron-log": "^4.2.4",
     "electron-updater": "^4.3.4",
     "history": "^5.0.0",
     "lodash.throttle": "^4.1.1",
+    "luxon": "^1.26.0",
+    "moment": "^2.29.1",
     "react": "^17.0.1",
     "react-charts": "^2.0.0-beta.7",
     "react-dom": "^17.0.1",

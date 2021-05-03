@@ -1,8 +1,27 @@
 /* eslint-disable jsx-a11y/label-has-associated-control */
 import React, { useState, useEffect } from 'react';
-import { Button, Modal, Header, Form } from 'semantic-ui-react';
-import { useFileContext, ParserOptionsT } from './FileStateProvider';
+import { Button, Modal, Header, Form, Select, Input } from 'semantic-ui-react';
+import { DateTime } from 'luxon';
+import { useFileContext } from './FileStateProvider';
 import { validateRegex } from './ui-utils';
+import { ParserOptionsT } from './types';
+import DateFormatPopup from './DateFormatPopup';
+
+const formatDate = (formatStr: string, datetime: DateTime): string => {
+  if (formatStr === 'ISO') {
+    return datetime.toISO();
+  }
+  if (formatStr === 'RFC822') {
+    return datetime.toRFC2822();
+  }
+  if (formatStr === 'Unix') {
+    return Math.round(datetime.toSeconds()).toString();
+  }
+  if (formatStr === 'Millis') {
+    return datetime.toMillis().toString();
+  }
+  return datetime.toFormat(formatStr);
+};
 
 const SettingsModal = ({ show, onClose }) => {
   const fileState = useFileContext().state;
@@ -10,11 +29,27 @@ const SettingsModal = ({ show, onClose }) => {
     fileState.parserOptions
   );
   const [bufferSize, setBufferSize] = useState('');
+  const [tsSelect, setTsSelect] = useState('ISO');
+  const [customFormat, setCustomFormat] = useState('');
 
   useEffect(() => {
     if (!show) {
       setSettings(fileState.parserOptions);
       setBufferSize(fileState.parserOptions.bufferSize.toString());
+      if (fileState.parserOptions.dateFormat) {
+        if (
+          ['ISO', 'RFC822', 'Unix', 'Millis'].indexOf(
+            fileState.parserOptions.dateFormat
+          ) >= 0
+        ) {
+          setTsSelect(fileState.parserOptions.dateFormat);
+        } else {
+          setTsSelect('custom');
+          setCustomFormat(fileState.parserOptions.dateFormat);
+        }
+      } else {
+        setTsSelect('ISO');
+      }
     }
   }, [show, setSettings, fileState.parserOptions]);
 
@@ -46,10 +81,21 @@ const SettingsModal = ({ show, onClose }) => {
     ? validateRegex(settings.textOptions.timestampPattern)
     : { valid: true, error: null };
 
+  const getDateFormat = () => {
+    return tsSelect === 'custom' ? customFormat : tsSelect;
+  };
+
   const submitForm = () => {
     settings.bufferSize = parseInt(bufferSize, 10) || 1000;
+    settings.dateFormat = getDateFormat();
     onClose(settings);
   };
+
+  const updateTsSelect = (_e, item) => {
+    setTsSelect(item.value);
+  };
+
+  const exampleDate = formatDate(getDateFormat(), DateTime.now());
 
   return (
     <Modal
@@ -115,12 +161,39 @@ const SettingsModal = ({ show, onClose }) => {
                 updateTextOptionsField('timestampPattern', e.target.value)
               }
             />
-            {/* <Form.Input
-              fluid
-              label="Timestamp Format"
-              placeholder="Automatic"
-              value={settings.textOptions.timestampFormat}
-            /> */}
+            <Form.Field>
+              <label>Timestamp Format</label>
+              <Select
+                options={[
+                  { key: 'iso', value: 'ISO', text: 'ISO-8601' },
+                  { key: 'rfc', value: 'RFC822', text: 'RFC-822' },
+                  { key: 'unix', value: 'Unix', text: 'Unix' },
+                  { key: 'ms', value: 'Millis', text: 'Milliseconds' },
+                  { key: 'custom', value: 'custom', text: 'Custom' },
+                ]}
+                value={tsSelect}
+                onChange={updateTsSelect}
+              />
+              {tsSelect === 'custom' && (
+                <Input>
+                  <input
+                    placeholder="Date format"
+                    style={{
+                      borderBottomRightRadius: 0,
+                      borderTopRightRadius: 0,
+                    }}
+                    value={customFormat}
+                    onChange={(e) => {
+                      setCustomFormat(e.target.value);
+                    }}
+                  />
+                  <DateFormatPopup />
+                </Input>
+              )}
+              <small>
+                Example: <code>{exampleDate}</code>
+              </small>
+            </Form.Field>
           </Form.Group>
 
           <Header size="small">JSON Parsing</Header>

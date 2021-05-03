@@ -142,15 +142,17 @@ const MyMenu = () => {
               >
                 <Icon name="clock outline" />
               </Menu.Item>
-              {/* <Menu.Item
+              <Menu.Item
                 title="Show histogram"
-                active={options.showHistogram}
+                active={viewOptions.showHistogram}
                 onClick={() =>
-                  updateViewOptions({ showHistogram: !options.showHistogram })
+                  updateViewOptions({
+                    showHistogram: !viewOptions.showHistogram,
+                  })
                 }
               >
                 <Icon name="chart bar" />
-              </Menu.Item> */}
+              </Menu.Item>
             </Menu>
           </Menu.Item>
         )}

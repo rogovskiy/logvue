@@ -6,6 +6,7 @@ import LineSelector from './LineSelector';
 import { FileContext } from './FileStateProvider';
 
 import type { LineT, ShowTimestampOptionT } from './types';
+import { parseDate } from './main/parsers';
 
 const HANDLE_SIZE = 20; // TODO this needs to be dynamic
 const EMPTY_BUFFER = { lines: null, offset: 0 };
@@ -21,6 +22,7 @@ type LineBufferProps = {
   dispatch: React.Dispatch<any>;
   activeLine: number | null;
   lineCount: number;
+  dateFormat: string;
 };
 
 const LineBuffer: FunctionComponent<LineBufferProps> = React.memo(
@@ -35,11 +37,17 @@ const LineBuffer: FunctionComponent<LineBufferProps> = React.memo(
     dispatch,
     activeLine,
     lineCount,
+    dateFormat,
   }) => {
     const formatTimestamp = (value) => {
       if (showTimestamp === 'short' && value) {
-        const d = new Date(value).toISOString();
-        return d.substring(11, 23);
+        try {
+          return (
+            parseDate(value, dateFormat)?.toISOTime()?.substring(0, 12) || ''
+          );
+        } catch (e) {
+          return '';
+        }
       }
       return value;
     };
@@ -61,6 +69,13 @@ const LineBuffer: FunctionComponent<LineBufferProps> = React.memo(
         : lastLine.lineNo
       : null;
     console.log('last line', lastLine, lastLineNo, lineCount);
+    if (lines) {
+      lines.forEach((l) => {
+        if (activeLine === l.lineNo) {
+          console.log("ACTIVE ", l);
+        }
+      });
+    }
     return (
       <div style={{ height: `${height}px`, overflowY: 'hidden' }}>
         <table
@@ -426,6 +441,7 @@ class Lines extends React.Component<LinesProps, LinesState> {
           onLineClick={this.props.onLineClick}
           lineCount={this.props.lineCount}
           activeLine={this.context.state.activeLine}
+          dateFormat={this.context.state.parserOptions.dateFormat}
         />
       </div>
     );

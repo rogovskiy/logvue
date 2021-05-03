@@ -2,12 +2,10 @@ import React, { useContext, createContext, useReducer } from 'react';
 
 import { parseLineSpec } from './utils';
 import type {
-  JsonOptionsT,
-  TextOptionsT,
   LineT,
-  FileEncodingT,
   ShowTimestampOptionT,
   FilterT,
+  ParserOptionsT,
 } from './types';
 
 export type StateT = {
@@ -35,14 +33,6 @@ export type ViewerOptionsT = {
   showHistogram: boolean;
 };
 
-export type ParserOptionsT = {
-  textFormat: 'json' | 'text';
-  jsonOptions: JsonOptionsT;
-  textOptions: TextOptionsT;
-  encoding: FileEncodingT;
-  bufferSize: number;
-};
-
 const DEFAULT_VIEW_OPTIONS: ViewerOptionsT = {
   showLineNumber: false,
   showTimestamp: 'short',
@@ -55,6 +45,7 @@ const DEFAULT_PARSER_OPTIONS: ParserOptionsT = {
   textOptions: { extractKeyValue: true, timestampPattern: '^(.{25})' },
   encoding: 'utf-8',
   bufferSize: 1000,
+  dateFormat: 'ISO',
 };
 
 const initialState: StateT = {

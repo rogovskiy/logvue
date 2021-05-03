@@ -9,10 +9,15 @@ import SearchLines from './SearchLines';
 import FilterControls from './FilterControls';
 
 import { useFileContext } from './FileStateProvider';
+import Histogram from './Histogram';
+
+const HISTOGRAM_HEIGHT = 50;
 
 const FileViewer = () => {
   const { state: fileState, dispatch } = useFileContext();
-  const { file, parserOptions } = fileState;
+  const { file, parserOptions, viewOptions } = fileState;
+
+  const scanFinished = file.lineCount > 0;
 
   const [heights, setHeights] = useState<{
     resizer: string;
@@ -85,29 +90,48 @@ const FileViewer = () => {
   };
 
   return (
-    <div className="FullHeight" style={{ top: '45px' }}>
-      <SplitPane
-        split="horizontal"
-        onResizeEnd={panelsResized}
-        onResizeStart={() => {
-          const currentInterval = interval.current;
-          if (currentInterval) clearInterval(currentInterval);
+    <div>
+      {scanFinished && viewOptions.showHistogram && (
+        <Histogram
+          height={`${HISTOGRAM_HEIGHT}px`}
+          path={file.path!}
+          parserOptions={parserOptions}
+        />
+      )}
+      <div
+        className="FullHeight"
+        style={{
+          top: `${
+            45 +
+            (viewOptions.showHistogram && scanFinished
+              ? HISTOGRAM_HEIGHT + 3
+              : 0)
+          }px`,
         }}
       >
-        <Pane initialSize={heights.resizer}>
-          <MainLines ref={mainRef} height={heights.main} />
-        </Pane>
-        <Pane>
-          <div>
-            <FilterControls />
+        <SplitPane
+          split="horizontal"
+          onResizeEnd={panelsResized}
+          onResizeStart={() => {
+            const currentInterval = interval.current;
+            if (currentInterval) clearInterval(currentInterval);
+          }}
+        >
+          <Pane initialSize={heights.resizer}>
+            <MainLines ref={mainRef} height={heights.main} />
+          </Pane>
+          <Pane>
             <div>
-              {' '}
-              {/* extra div is needed for correct height calculation */}
-              <SearchLines ref={searchRef} height={heights.search} />
+              <FilterControls />
+              <div>
+                {' '}
+                {/* extra div is needed for correct height calculation */}
+                <SearchLines ref={searchRef} height={heights.search} />
+              </div>
             </div>
-          </div>
-        </Pane>
-      </SplitPane>
+          </Pane>
+        </SplitPane>
+      </div>
     </div>
   );
 };

@@ -1,5 +1,6 @@
 import fs from 'fs';
-import { parseJson, parsePlainText } from './parsers';
+import type { DateTime } from 'luxon';
+import { parseDate, parseJson, parsePlainText } from './parsers';
 import { createLineMatcher } from './search';
 import type {
   LineT,
@@ -7,6 +8,7 @@ import type {
   JsonOptionsT,
   TextOptionsT,
   FilterT,
+  CheckpointT,
 } from '../types';
 
 export type FileOptionsT = {
@@ -16,19 +18,24 @@ export type FileOptionsT = {
   textFormat?: string;
   jsonOptions?: JsonOptionsT;
   textOptions?: TextOptionsT;
+  dateFormat?: string;
 };
 type FileStatsT = {
   lineCount: number;
   fileSize: number;
   checkpoints: Array<CheckpointT>;
 };
-type CheckpointT = { lineNo: number; offset: number };
 type SearchCheckpointT = {
   searchLineNo: number;
   lineNo: number;
   offset: number;
 };
 type LineOptionsT = { truncated?: boolean };
+type HistogramPointT = {
+  startTime: DateTime;
+  endTime: DateTime;
+  value: number;
+};
 
 type ProgressCallbackFn = (progress: number, count: number) => void;
 type LineCallbackFn = (
@@ -70,7 +77,6 @@ const readLinesFromBuffer = (
         line = truncatedLine;
         options = { truncated: true };
       }
-      // console.log(offset, index);
       if (line.length > 0) {
         const continueLoop = lineCallback(
           line,
@@ -242,8 +248,8 @@ export const openFile = async (
 };
 
 const createLineParser = (options) => {
-  let lineParser;
-  if (options.textFormat === 'json') {
+  let lineParser = (l) => l;
+  if (options.textFormat === 'json' && options.jsonOptions) {
     const jo = options.jsonOptions;
     if (jo != null) {
       lineParser = (lineObject) => parseJson(lineObject, jo);
@@ -251,7 +257,7 @@ const createLineParser = (options) => {
   } else {
     const to = options.textOptions;
     if (to != null) {
-      lineParser = (lineObject) => parsePlainText(lineObject, to);
+      lineParser = (lineObject) => parsePlainText(lineObject, to, options.dateFormat);
     }
   }
   return lineParser;
@@ -467,4 +473,135 @@ export const searchScan = async (
     progressCallback(0, result.resultsCount); // done
   }
   return result;
+};
+
+const readLineAfOffset = (
+  fileHandle,
+  buffer,
+  ch: CheckpointT,
+  options
+): LineT | null => {
+  // const readBytesPromise = new Promise<number>((resolve, reject) => { // eslint-disable-line
+  //   fs.read(
+  //     fileHandle.fd,
+  //     buffer,
+  //     0,
+  //     buffer.length,
+  //     ch.offset,
+  //     (err, _bytesRead, _buffer) => {
+  //       console.log("CALLBACK")
+  //       if (err) {
+  //         reject(err);
+  //       } else {
+  //         resolve(_bytesRead);
+  //       }
+  //     }
+  //   );
+  // });
+  // console.log("WWW", ch.lineNo, ch.offset, buffer.length);
+  const bytesRead = fs.readSync(
+    fileHandle.fd,
+    buffer,
+    0,
+    buffer.length,
+    ch.offset
+  );
+  // console.log("BUTES read ", bytesRead);
+  let firstLine: LineT | null = null;
+  readLinesFromBuffer(
+    buffer,
+    bytesRead,
+    options.encoding,
+    ch.offset,
+    null,
+    ch.lineNo,
+    (line) => {
+      firstLine = line;
+      return false;
+    }
+  );
+  return firstLine;
+};
+
+const makeHistogram = (data, numberOfBuckets): HistogramPointT[] | null => {
+  const start = data[0];
+  const end = data[data.length - 1];
+  if (!start.ts || !end.ts) {
+    return null; // no time available
+  }
+  if (data.length < numberOfBuckets) {
+    return null; // too few data points
+  }
+  const totalTime = end.ts.diff(start.ts, 'seconds');
+  if (totalTime < 0) {
+    // start time > end time , this shouldn't happend but it does sometimes
+    return null;
+  }
+  const interval = totalTime / numberOfBuckets;
+  let dataIndex = 1;
+  let nextTime = start.ts.plus(interval, 'seconds');
+  const histogram: HistogramPointT[] = [];
+  let startLineCount = 0;
+  // console.log(data.map( d => (d.lineNo)));
+  while (dataIndex < data.length) {
+    const current = data[dataIndex];
+    const prev = data[dataIndex - 1];
+    if (current.ts >= nextTime && prev.ts) {
+      const endAdjustment =
+        ((current.lineNo - prev.lineNo) * nextTime.diff(prev.ts, 'seconds')) /
+        current.ts.diff(prev.ts, 'seconds');
+      const endLineCount = prev.lineNo + endAdjustment;
+      const diff = endLineCount - startLineCount;
+      histogram.push({
+        startTime: nextTime.minus(interval, 'seconds'),
+        endTime: nextTime,
+        value: diff,
+      });
+      while (current.ts >= nextTime) {
+        nextTime = nextTime.plus(interval, 'seconds'); // not always the desired number of bars unfortunately
+      }
+      startLineCount = endLineCount;
+      // console.log("next time", nextTime.toISO());
+    }
+    dataIndex += 1;
+  }
+  return histogram;
+};
+
+export const getFileHistogram = async (
+  filename: string,
+  checkpoints: CheckpointT[],
+  numberOfBuckets: number,
+  options: FileOptionsT
+): Promise<HistogramPointT[] | null> => {
+  const fileHandle = await fs.promises.open(filename, 'r');
+  const buffer = Buffer.alloc(options.bufferSize || DEFAULT_BUFFER);
+  const lineParser = createLineParser(options);
+  let dateFormat: string | null = null;
+  if (options.textFormat === 'text' && options.textOptions) {
+    dateFormat = options.dateFormat || null;
+  }
+  if (options.textFormat === 'json' && options.jsonOptions) {
+    dateFormat = options.dateFormat || null;
+  }
+  try {
+    const data: LineT[] = [];
+    // eslint-disable-next-line no-restricted-syntax
+    for (const ch of checkpoints) {
+      // eslint-disable-next-line no-await-in-loop
+      const maybeLine = readLineAfOffset(fileHandle, buffer, ch, options);
+      if (maybeLine) {
+        const parsedLine = lineParser({ line: maybeLine });
+        const withTimestamp = {
+          ...parsedLine,
+          ts: parseDate(parsedLine._ts, dateFormat),
+          lineNo: ch.lineNo,
+        };
+        data.push(withTimestamp);
+      }
+    }
+    return makeHistogram(data, numberOfBuckets);
+  } finally {
+    await fileHandle.close();
+  }
 };

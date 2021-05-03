@@ -19,22 +19,21 @@
 
 1.0
 [X] Match case in search
+[ ] Histogram panel (display line counts , matches)
 [ ] Cancel search
 [X] Validate search regex, highlight red
 [ ] Scan should return lines (be more responsive)
-[ ] Settings dialog
+[X] Settings dialog
 [ ] Software update  won't work until certs are purchased
-[X] Update github pages (screenshot and list of features)
-[ ] Create twitter
 [ ] Select custom columns
-[ ] JSON doesn't show the thread
-[ ] Guess optimal settings when openning a file (json/ text / json fields / encoding may be)
-[ ] Change timezone
-[ ] Display timezone in the file info
+[ ] JSON doesn't show the thread nor stacktraces
 
 1.1
 ~
-[ ] Histogram panel (display line counts , matches)
+[ ] Search is slow
+[ ] Guess optimal settings when openning a file (json/ text / json fields / encoding may be)
+[ ] Change timezone
+[ ] Display timezone in the file info
 [ ] Concepts of "thread" and "span" may be highlighting based on that. A button displaying known threads (scan to find all). Assign colors to threads (affects timestamp display color and histogram)
 [ ] Filter threads
 [ ] Open recent dialog

@@ -64,7 +64,7 @@ describe('Text Parsing', () => {
       offset: 25,
       line: 'Hello world',
     };
-    const parsed = parsers.parsePlainText(lineObject, {});
+    const parsed = parsers.parsePlainText(lineObject, {}, 'ISO');
     expect(parsed._message).toBe('Hello world');
   });
 
@@ -74,9 +74,13 @@ describe('Text Parsing', () => {
       offset: 25,
       line: 'Hello world time=12sec cpu=21',
     };
-    const parsed = parsers.parsePlainText(lineObject, {
-      extractKeyValue: true,
-    });
+    const parsed = parsers.parsePlainText(
+      lineObject,
+      {
+        extractKeyValue: true,
+      },
+      'ISO'
+    );
     expect(parsed._message).toBe(lineObject.line);
     expect(parsed.time).toBe('12sec');
     expect(parsed.cpu).toBe('21');
@@ -88,13 +92,59 @@ describe('Text Parsing', () => {
       offset: 25,
       line: '2021-03-18T03:59:52.017Z Hello world time=12sec cpu=21',
     };
-    const parsed = parsers.parsePlainText(lineObject, {
-      timestampPattern: '^.{24}',
-      extractKeyValue: true,
-    });
+    const parsed = parsers.parsePlainText(
+      lineObject,
+      {
+        timestampPattern: '^.{24}',
+        extractKeyValue: true,
+      },
+      'ISO'
+    );
     expect(parsed._message).toBe('Hello world time=12sec cpu=21');
     expect(parsed.time).toBe('12sec');
     expect(parsed.cpu).toBe('21');
     expect(parsed._ts).toBe('2021-03-18T03:59:52.017Z');
+  });
+
+  it('extract timestamp complex regexp', () => {
+    const lineObject = {
+      lineNo: 12,
+      offset: 25,
+      line: '2021-03-18T03:59:52.017Z - Hello world time=12sec cpu=21',
+    };
+    const parsed = parsers.parsePlainText(
+      lineObject,
+      {
+        timestampPattern: '^(.{24}) -',
+        extractKeyValue: true,
+      },
+      'ISO'
+    );
+    expect(parsed._message).toBe('Hello world time=12sec cpu=21');
+    expect(parsed.time).toBe('12sec');
+    expect(parsed.cpu).toBe('21');
+    expect(parsed._ts).toBe('2021-03-18T03:59:52.017Z');
+  });
+
+  it('extract timestamp ignores dates that cannot be parsed', () => {
+    const lineObject = {
+      lineNo: 12,
+      offset: 25,
+      line: 'this line does not have a date - Hello world time=12sec cpu=21',
+    };
+    const parsed = parsers.parsePlainText(
+      lineObject,
+      {
+        timestampPattern: '^(.{24}) -',
+        extractKeyValue: true,
+      },
+      'ISO'
+    );
+    expect(parsed._message).toBe(
+      'this line does not have a date - Hello world time=12sec cpu=21'
+    );
+    expect(parsed.time).toBe('12sec');
+    expect(parsed.cpu).toBe('21');
+    expect(parsed._ts).toBeFalsy();
   });
 });

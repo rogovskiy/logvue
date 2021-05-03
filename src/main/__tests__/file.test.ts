@@ -10,6 +10,8 @@ import {
 
 import type { FileOptionsT } from '../file';
 
+const DEFAULT_PARSER_OPTIONS: FileOptionsT = {};
+
 const testFilePath = (filename) => {
   return `${__dirname}/${filename}`;
 };
@@ -51,7 +53,7 @@ test('openFile small file', async () => {
   const result = await openFile(
     testFilePath('sample.txt'),
     10,
-    { encoding: 'utf-8' },
+    DEFAULT_PARSER_OPTIONS,
     () => {
       numberNotifies += 1;
     }
@@ -73,7 +75,7 @@ test.each`
   ${100}
 `('openFile larger file (buffer: $bufferSize KB)', async ({ bufferSize }) => {
   const result = await openFile(testFilePath('Proxifier_2k.log'), 500, {
-    encoding: 'utf-8',
+    ...DEFAULT_PARSER_OPTIONS,
     bufferSize: bufferSize * 1024,
   });
   expect(result.fileStats.lineCount).toBe(2000); // non-empty lines
@@ -123,7 +125,7 @@ test('loadBuffer small', async () => {
     2,
     10,
     [],
-    {},
+    DEFAULT_PARSER_OPTIONS,
     () => {
       numberNotifies += 1;
     }
@@ -145,7 +147,7 @@ test('loadBuffer larger file without checkpoints', async () => {
     1975,
     50,
     [],
-    {},
+    DEFAULT_PARSER_OPTIONS,
     () => {
       numberNotifies += 1;
     }
@@ -183,16 +185,18 @@ test('loadBuffer larger file without checkpoints', async () => {
 
 test('loadBuffer larger file with checkpoints', async () => {
   let numberNotifies = 0;
-  const result = await openFile(testFilePath('Proxifier_2k.log'), 10, {
-    encoding: 'utf-8',
-  });
+  const result = await openFile(
+    testFilePath('Proxifier_2k.log'),
+    10,
+    DEFAULT_PARSER_OPTIONS
+  );
 
   const buffer = await loadBuffer(
     testFilePath('Proxifier_2k.log'),
     1975,
     50,
     result.fileStats.checkpoints,
-    {},
+    DEFAULT_PARSER_OPTIONS,
     () => {
       // TODO add checkpoints
       numberNotifies += 1;
@@ -233,7 +237,7 @@ test('search scan string in a small file', async () => {
   const { resultsCount } = await searchScan(
     testFilePath('sample.txt'),
     { query: 'tw', matchCase: true },
-    { encoding: 'utf-8' },
+    DEFAULT_PARSER_OPTIONS,
     () => {}
   );
   expect(resultsCount).toBe(1);
@@ -241,7 +245,7 @@ test('search scan string in a small file', async () => {
   const { resultsCount: resultsCount2 } = await searchScan(
     testFilePath('sample.txt'),
     { query: 't', matchCase: true },
-    { encoding: 'utf-8' },
+    DEFAULT_PARSER_OPTIONS,
     () => {}
   );
   expect(resultsCount2).toBe(2);
@@ -254,7 +258,7 @@ test('search string in a small file using start line', async () => {
     2,
     1000,
     [],
-    { encoding: 'utf-8' },
+    DEFAULT_PARSER_OPTIONS,
     () => {}
   );
   expect(lines).toStrictEqual([]);
@@ -263,7 +267,10 @@ test('search string in a small file using start line', async () => {
 test('buffered search', async () => {
   // for i in {0..1000}; do echo aaa $i; echo bbb $i; echo ccc $i;  done > src/__tests__/search_test.txt
   const testFile = testFilePath('search_test.txt');
-  const options: FileOptionsT = { encoding: 'utf-8', bufferSize: 100 };
+  const options: FileOptionsT = {
+    ...DEFAULT_PARSER_OPTIONS,
+    bufferSize: 100,
+  };
   const searchQuery = { query: 'aaa', matchCase: true };
 
   await openFile(testFile, 10, options);

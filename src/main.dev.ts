@@ -25,7 +25,13 @@ import log from 'electron-log';
 import fs from 'fs';
 import throttle from 'lodash.throttle';
 
-import { loadBuffer, openFile, searchScan, searchBuffer } from './main/file';
+import {
+  loadBuffer,
+  openFile,
+  searchScan,
+  searchBuffer,
+  getFileHistogram,
+} from './main/file';
 
 export default class AppUpdater {
   constructor() {
@@ -197,6 +203,14 @@ ipcMain.handle(
       lineCount: results.fileStats.lineCount,
       offset: 0,
     };
+  }
+);
+
+ipcMain.handle(
+  'get-histogram',
+  async (_event, filename, numberOfBuckets, options) => {
+    const { checkpoints } = fileInfo[filename].fileStats;
+    return getFileHistogram(filename, checkpoints, numberOfBuckets, options);
   }
 );
 
