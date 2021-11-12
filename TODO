@@ -21,17 +21,17 @@
 [X] Match case in search
 [X] Cancel search
 [X] Validate search regex, highlight red
+[ ] Guess optimal settings when openning a file (json/ text / json fields / encoding may be)
+[ ] JSON doesn't show the thread nor stacktraces
 [ ] Histogram panel display matches
 [ ] Scan should return lines (be more responsive)
 [X] Settings dialog
 [ ] Software update  won't work until certs are purchased
 [ ] Select custom columns
-[ ] JSON doesn't show the thread nor stacktraces
 
 1.1
 ~
 [ ] Search is slow
-[ ] Guess optimal settings when openning a file (json/ text / json fields / encoding may be)
 [ ] Change timezone
 [ ] Display timezone in the file info
 [ ] Concepts of "thread" and "span" may be highlighting based on that. A button displaying known threads (scan to find all). Assign colors to threads (affects timestamp display color and histogram)

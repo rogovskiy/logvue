@@ -2,6 +2,8 @@ import fs from 'fs';
 import type { DateTime } from 'luxon';
 import { parseDate, parseJson, parsePlainText } from './parsers';
 import { createLineMatcher } from './search';
+import guessFormat from './wiz';
+
 import type {
   LineT,
   FileEncodingT,

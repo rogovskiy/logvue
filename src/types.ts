@@ -33,3 +33,17 @@ export type ParserOptionsT = {
   bufferSize: number;
   numCheckpoints?: number;
 };
+
+export type SuggestionT = {
+  textFormat: 'json' | 'text';
+  jsonOptions?: {
+    message: string | null;
+    timestamp: string | null;
+    stacktrace: string | null;
+    fields: string[];
+  };
+  textOptions?: {
+    timestampPattern?: string | null;
+  };
+  dateFormat?: string | null;
+};

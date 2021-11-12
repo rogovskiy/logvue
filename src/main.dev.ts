@@ -32,6 +32,7 @@ import {
   searchBuffer,
   getFileHistogram,
 } from './main/file';
+import guessFormat from './main/wiz';
 
 export default class AppUpdater {
   constructor() {
@@ -180,6 +181,22 @@ ipcMain.handle('show-file-open', async (_event, _arg) => {
   console.log('Return', new Date());
   return { path: filePath, fileSize: stat.size, modTime: stat.mtime };
 });
+
+ipcMain.handle(
+  'guess-settings',
+  async (_event, filename, lineBufferSize, options) => {
+    const results = await loadBuffer(
+      filename,
+      0,
+      lineBufferSize,
+      [],
+      options,
+      () => false
+    );
+    const subset = results.lines.splice(0, 10).map((l) => l.line);
+    return { suggestion: guessFormat(subset), previewLines: results.lines };
+  }
+);
 
 ipcMain.handle(
   'open-file',
