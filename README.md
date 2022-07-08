@@ -1,4 +1,4 @@
-# LogVue
+# <img src=".erb/img/logo6-white.png" alt="logo" height="30" /> LogVue
 
 LogVue is a desktop log research tool. Inspired by an older [Glogg](http://glogg.bonnefon.org) application, it has been implemented in the modern Electron framework to allow richer analysis and faster iteration.  
 
